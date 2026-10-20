@@ -101,7 +101,7 @@ class PackagingTests(unittest.TestCase):
             text = path.read_text(encoding='utf-8')
             self.assertIsNone(re.search(r'(?:ghp_|github_pat_)[A-Za-z0-9_]{30,}', text), str(path))
 
-    def test_license_and_citation_do_not_invent_release(self):
+    def test_license_and_citation_fields(self):
         self.assertIn('Non-Commercial', (ROOT / 'LICENSE').read_text())
         citation = (ROOT / 'CITATION.cff').read_text()
         self.assertIn('BRISANCE-pipeline', citation)

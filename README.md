@@ -1,37 +1,23 @@
 # BRISANCE
 
-**Bioinformatics workflow for Reproducible Identification of Somatic variants and Annotation using NVIDIA and Containerized Execution.**
+Official repository of BRISANCE, a GPU-accelerated pipeline for somatic short-variant detection in matched tumor–normal whole-genome sequencing data.
 
-BRISANCE processes matched tumor–normal whole-genome sequencing reads with NVIDIA Parabricks and containerized downstream tools. This repository brings together the Nextflow implementation, the historical HG008 procedure, and the analyses supporting the study.
+BRISANCE stands for *Bioinformatics workflow for Reproducible Identification of Somatic variants and Annotation using NVIDIA and Containerized Execution*.
 
-**Status:** public preparation draft. The original Nextflow implementation completed a full HG008 run; the reorganized repository has not been rerun on HG008. Outstanding publication checks are listed in [Release checklist](docs/release_checklist.md). This is research software, not a clinically validated diagnostic pipeline.
+The pipeline uses NVIDIA Parabricks for alignment, preprocessing and somatic variant calling, followed by GATK filtering and Ensembl VEP annotation. Nextflow manages the execution of these steps with versioned Docker images. This repository also contains the procedures and analyses associated with the HG008 study.
 
-## Start here
-
-| Purpose | Location |
-| --- | --- |
-| Run the Nextflow workflow | [Usage](docs/usage.md) and [workflow](workflow/README.md) |
-| Check software, hardware and permissions | [Requirements](docs/requirements.md) |
-| Identify output files and storage precautions | [Outputs](docs/outputs.md) |
-| Understand the original manual HG008 procedure | [Historical Parabricks workflow](historical_workflows/parabricks/README.md) |
-| Inspect the CPU comparator | [Historical CPU workflow](historical_workflows/cpu/README.md) |
-| Reproduce SNV/indel comparisons | [Variant comparison](analysis/variant_comparison/README.md) |
-| Inspect RTG benchmarking | [RTG benchmark](analysis/rtg_benchmark/README.md) |
-| Locate VAF and runtime-analysis material | [VAF](analysis/vaf/README.md) and [runtime](analysis/runtime/README.md) |
-| Review execution evidence | [Validation](validation/README.md) and [repository checks](validation/repository_checks_2026-10-20.md) |
-| Trace the migrated files to their sources | [Provenance](provenance/README.md) |
-
-## Nextflow workflow
+## Workflow
 
 ```text
-Paired FASTQs → Trim Galore / FastQC → fq2bam → ApplyBQSR
-            → read-group SM adjustment and indexing → MutectCaller
-            → FilterMutectCalls → PASS selection → VEP → positive-TLOD selection
+FASTQ → Trim Galore / FastQC → fq2bam → ApplyBQSR → read-group adjustment
+      → MutectCaller → FilterMutectCalls → PASS selection → VEP → positive-TLOD selection
 ```
 
-The workflow currently supports **one tumor–normal pair**, with one or more paired FASTQ inputs per sample. The tested configuration uses **3 GPUs for fq2bam and 2 for MutectCaller**. GPU counts and thread parameters are fixed in this implementation; this is not yet a general resource-selection interface.
+One tumor–normal pair is processed per run, with multiple paired FASTQ inputs supported for each sample. The implemented configuration uses 3 GPUs for fq2bam and 2 for MutectCaller. Software versions, resource settings and server requirements are described in [Requirements](docs/requirements.md).
 
-Nextflow's default mode is **metadata validation**, not scientific processing. After preparing a samplesheet:
+## Usage
+
+Prepare a samplesheet using [the HG008 example](assets/hg008_samplesheet.example.csv), then check the input paths:
 
 ```bash
 nextflow run workflow/main.nf \
@@ -40,18 +26,27 @@ nextflow run workflow/main.nf \
   -ansi-log false
 ```
 
-No FASTQ contents are read in this mode. For reference/cache checks and an explicitly requested full run, follow [Usage](docs/usage.md). Do not run the Turing-specific launchers on another server without adapting their documented environment assumptions.
+This command checks metadata without processing the reads. Reference/cache configuration and full execution are described in [Usage](docs/usage.md). Output files and work-directory management are described in [Outputs](docs/outputs.md).
 
-## Evidence and scope
+## Repository contents
 
-The full HG008 execution on Turing completed **18 tasks**, all with exit code 0. Its final VCF contained **17,455 records**, all with nonempty `INFO/CSQ` and satisfying `INFO/TLOD>0 && INFO/TLOD!="."`. A comparison with the historical final VCF found 17,455 matching `CHROM/POS/REF/ALT` records and no records unique to either file. These checks do **not** establish byte-identical VCFs, matching genotypes/annotations, independent biological accuracy, or portability to another server. See the [full-run record](validation/hg008_100pct/README.md).
+| Directory | Contents |
+| --- | --- |
+| [workflow](workflow/README.md) | Nextflow workflow, modules and execution helpers |
+| [docs](docs/usage.md) | Requirements, input preparation, execution and outputs |
+| [historical_workflows](historical_workflows/README.md) | Manual Parabricks procedure and CPU comparator used in the study |
+| [analysis](analysis/README.md) | Variant-set comparison, RTG benchmarking, VAF and runtime analyses |
+| [validation](validation/README.md) | HG008 execution records and software tests |
+| [provenance](provenance/README.md) | Original repository snapshots and source-file checksums |
 
-The study's historical CPU–GPU comparison and GPU-scaling experiments are separate from the later Nextflow implementation. Historical results have not been replaced by the new run. Counts of VCF records must not be confused with the manuscript's allele-level SNV/indel counts.
+## HG008 evaluation
 
-## Data, license and citation
+The full-input Nextflow run completed 18 tasks successfully and produced 17,455 final VCF records. All records contained VEP annotations and met the positive-TLOD selection criterion. Comparison with the historical final VCF showed complete agreement for `CHROM`, `POS`, `REF` and `ALT`, with no records exclusive to either file. The comparison scope, execution settings and timings are reported in [Validation](validation/hg008_100pct/README.md).
 
-No sequencing reads, BAMs, full VCFs, reference genomes, VEP cache, credentials or server-cleanup utilities are distributed here. Input identifiers and links are documented in [Data and references](docs/data.md).
+The historical CPU–GPU benchmark, GPU-scaling experiments and subsequent Nextflow evaluation are reported separately. Data sources and reference resources are listed in [Data and references](docs/data.md).
 
-New BRISANCE material is distributed for non-commercial research, education and personal use under [LICENSE](LICENSE). Preserved source snapshots retain their original terms; see [Licensing](docs/licensing.md). Tool and container licenses remain separate.
+## License and citation
 
-Citation metadata is in [CITATION.cff](CITATION.cff). A manuscript/preprint DOI and a versioned release will be added when available; no DOI or release is claimed in this draft.
+BRISANCE is available for non-commercial research, education and personal use under [LICENSE](LICENSE). Original source copies retain their respective terms; see [Licensing](docs/licensing.md).
+
+Citation information is provided in [CITATION.cff](CITATION.cff).

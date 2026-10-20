@@ -10,8 +10,8 @@ The five original scripts are in `originals/`, copied unchanged from `GATK-Somat
 | `4-ApplyBQSR.sh` | ApplyBQSR |
 | `5-VariantCaller.sh` | GATK Mutect2 |
 
-The manuscript documents BWA-MEM 0.7.19-r1273, samtools 1.21 and GATK 4.6.2.0, with step-specific settings in its CPU–GPU comparison table. Some source scripts use moving container tags, original paths, or local GATK. The generic `--threads` argument in the caller wrapper must not be assumed to set Mutect2's scientific thread option; verify the actual invocation/log before asserting that it does.
+The study used BWA-MEM 0.7.19-r1273, samtools 1.21 and GATK 4.6.2.0, with step-specific settings in the CPU–GPU comparison table. The source scripts include original server paths, moving container tags and local GATK execution. In the caller wrapper, `--threads` controls samtools indexing; the Mutect2 command does not pass an explicit thread option.
 
-These files are retained for historical inspection, not advertised as a newly validated portable CPU pipeline. The new BRISANCE GPU workflow does not run them automatically. Preserve the distinction between command versions observed in logs and tags written in scripts.
+These scripts document the CPU comparator and are executed separately from the BRISANCE GPU workflow. Software versions recorded in execution logs identify the historical environment; moving image tags alone do not.
 
-Do not run them unchanged against existing outputs: they include output creation/overwriting behavior and assumptions about BAM name matching. Actual successful commands/logs and the timing scope must be reconciled before a release claims full CPU comparator reproducibility. No fresh CPU analysis or runtime validation was performed during migration.
+Configure the paths and BAM-name matching rules before use, and select fresh output directories because scripts can overwrite files. Where the generic scripts omit a historical parameter, the corresponding execution log is needed to establish its value.

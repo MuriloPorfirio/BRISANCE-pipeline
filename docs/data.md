@@ -16,8 +16,8 @@ Known-sites resources:
 - `Homo_sapiens_assembly38.known_indels.vcf.gz`
 - `1000G_phase1.snps.high_confidence.hg38.vcf.gz`
 
-Their identity between the existing Turing copies and historical Apollo backup was checked with matching SHA256 values during preparation. [reference_checksums.tsv](../validation/reference_checksums.tsv) records the supplied values; it is not a new verification of all current remote files or index consistency.
+The Turing resources and historical Apollo copies had matching SHA256 values. The recorded checksums are listed in [reference_checksums.tsv](../validation/reference_checksums.tsv). This comparison concerns file contents, separately from index consistency.
 
 The VEP cache is `homo_sapiens/113_GRCh38`, species `homo_sapiens`, assembly GRCh38/GRCh38.p14. Metadata recorded Ensembl 113, GENCODE 47, dbSNP 156, ClinVar 202404, COSMIC 99 and gnomAD exome/genome v4.1. Matching an `info.txt` is not a hash of the cache payload. Keep shared cache content unchanged/read-only during an experiment.
 
-The study comparator is `dragen_4.2.4_HG008-mosaic_tumor.hard-filtered.vcf.gz`. It is a comparator call set, **not** an independently validated somatic truth set. Benchmark metrics are agreement with that comparator. No confident-region BED is invented here.
+The study comparator is `dragen_4.2.4_HG008-mosaic_tumor.hard-filtered.vcf.gz`. Benchmark metrics describe agreement with this call set rather than accuracy against an independently validated somatic truth set. The comparison was performed without a confident-region BED.

@@ -45,7 +45,7 @@ Normal scientific runs use the invoking numeric UID/GID. The cache is mounted re
 
 The fq2bam sorting/postsorting limit is 128 GB, distinct from its 256 GB container ceiling. FastQC's Java heap ceiling is 8 GiB. Limits are settings, not measured minimums or constant consumption. CPU counts mean logical-CPU quota, not physical sockets or the exact number of application threads. GPU identities are configurable, but counts are currently fixed to 3/1/2. fq2bam tasks run sequentially; both finish before ApplyBQSR begins. The caller waits for both adjusted BAMs. No reservation against other users is provided.
 
-The normal trimming container's quota was changed manually from 2 to 8 CPUs during the full run. That intervention is recorded in [full-run validation](../validation/hg008_100pct/README.md), not silently applied to the configuration above.
+During the full run, the normal trimming container's quota changed from 2 to 8 CPUs. The table above gives the workflow configuration; the runtime change is recorded in [Full-run validation](../validation/hg008_100pct/README.md).
 
 ## Disk space
 

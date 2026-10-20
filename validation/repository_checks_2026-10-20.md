@@ -1,10 +1,10 @@
-# Repository preparation checks — 20 October 2026
+# Software tests — 20 October 2026
 
-The following checks were run on the Linux Mint workstation against the reorganized local repository, **not** on Turing and not with HG008 payloads:
+The following tests were run on Linux Mint with synthetic inputs and simulated dependencies:
 
-- Repository suite: **20 tests passed**. Checks include preservation of 13 scientific Nextflow/config/module files, preservation of 31 source-snapshot files and their original Git blob identities, metadata/counting arithmetic, documentation links, reconstructed historical recipe syntax/options, payload/credential exclusions and the reconstructed indel comparison's no-overwrite behavior.
-- Preserved workflow helper suite: **62 tests discovered; 60 passed and 2 optional Nextflow integration tests skipped** because no `BRISANCE_TEST_NF` was supplied for this run. Hardware, scientific tools and sequencing inputs are simulated by these helper tests.
-- The active indel comparison and downstream table were exercised on tiny synthetic SNV/indel/multiallelic/OTHER records. Expected totals and 40.00% synthetic intersection-over-union were obtained. This is not a reproduction of the HG008 manuscript table.
-- Preserved and reconstructed active Bash commands passed syntax checks. Archived generic examples are deliberately kept unchanged, rather than silently repaired and represented as historical originals.
+- Repository suite: **20 tests passed**, covering 13 scientific Nextflow/configuration/module file checksums, 31 original source-file identities, metadata and timing arithmetic, documentation links, manual command syntax and options, payload/credential exclusions, and indel-comparison output handling.
+- Workflow helper suite: **62 tests discovered; 60 passed and 2 optional Nextflow integration tests skipped** because `BRISANCE_TEST_NF` was not supplied. Hardware and scientific tools are simulated in this suite.
+- Synthetic SNV, indel, multiallelic and OTHER records produced the expected comparison table and 40.00% intersection-over-union.
+- Active shell scripts and generated manual commands passed Bash syntax checks. Archived source examples retain their original contents.
 
-No real Docker/Parabricks/VEP/RTG job, full-input rerun, live server cleanup, FASTQ transfer, or manuscript edit was performed during these checks. The original remote full-run report archive is still to be incorporated. Passing these checks is not a substitute for the open items in the release checklist.
+These tests evaluate software behavior and repository consistency, separately from the HG008 execution results. Current commands are listed in [Tests](../tests/README.md); analysis-specific limitations are listed in [Technical notes](../docs/technical_notes.md).
