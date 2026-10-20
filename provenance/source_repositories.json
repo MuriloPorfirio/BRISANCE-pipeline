@@ -1,0 +1,29 @@
+{
+  "retrieved_on": "2026-10-20",
+  "repositories": [
+    {
+      "repository": "MuriloPorfirio/GATK-Somatic-Pipeline",
+      "url": "https://github.com/MuriloPorfirio/GATK-Somatic-Pipeline",
+      "commit": "60b5e0bbd23b7ef993d8707c13491b85adc2b663",
+      "snapshot": "provenance/source_snapshots/GATK-Somatic-Pipeline"
+    },
+    {
+      "repository": "MuriloPorfirio/HG008-BCFtools-Parabricks-vs-DRAGEN",
+      "url": "https://github.com/MuriloPorfirio/HG008-BCFtools-Parabricks-vs-DRAGEN",
+      "commit": "c2ddc4b0b0f569bb4e2658c9d9a406a0ebb3913a",
+      "snapshot": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN"
+    },
+    {
+      "repository": "MuriloPorfirio/HG008-ROC-Parabricks-vs-DRAGEN",
+      "url": "https://github.com/MuriloPorfirio/HG008-ROC-Parabricks-vs-DRAGEN",
+      "commit": "744434127f0cba6d7267cbbb921cb06a50275ac2",
+      "snapshot": "provenance/source_snapshots/HG008-ROC-Parabricks-vs-DRAGEN"
+    },
+    {
+      "repository": "MuriloPorfirio/PARABRICKS-Somatic-SNVs_INDELs-Pipeline",
+      "url": "https://github.com/MuriloPorfirio/PARABRICKS-Somatic-SNVs_INDELs-Pipeline",
+      "commit": "e10de8fc61d0dc2ead3b2c87b97f05114d2514d6",
+      "snapshot": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline"
+    }
+  ]
+}

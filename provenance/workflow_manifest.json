@@ -1,0 +1,57 @@
+{
+  "evidence": "Local scientific source associated with main.nf revision 0cd76ca9c7 in the supplied Turing run transcript; remote report archive still to be imported.",
+  "files": [
+    {
+      "path": "workflow/main.nf",
+      "sha256": "de7a3592fe67e30a80119bc5b66e88f5040a9e39ef43dba77c8714e9cada802f"
+    },
+    {
+      "path": "workflow/nextflow.config",
+      "sha256": "50ce1bfe0f7857aa6c628841fcb6237b1aa327f6b301a8c18c74b3b598816f25"
+    },
+    {
+      "path": "workflow/modules/annotate_vep.nf",
+      "sha256": "0870aa8a978b6c7f17eaa45b29b40ba05c85bfba76e97bcb9a30ea8c57dec5e9"
+    },
+    {
+      "path": "workflow/modules/apply_bqsr.nf",
+      "sha256": "d801f48fa9b3e0a18b4de7929cdc9abd442d14b34b325b4940f14623304db66c"
+    },
+    {
+      "path": "workflow/modules/compress_raw_vcf.nf",
+      "sha256": "50120df6a2295049becd090346912e74b5135c4a8875f30fb56e5796fc8da9d6"
+    },
+    {
+      "path": "workflow/modules/filter_mutect_calls.nf",
+      "sha256": "3b570a9b0517140d0d5f58d3a6a90bda7598952fa0c3d57fdb4762d061f67da8"
+    },
+    {
+      "path": "workflow/modules/fq2bam.nf",
+      "sha256": "0ff1d9edd772e12d3368dca6cf0f1dc7ec938f403a6e93c6160404d5a0ee0110"
+    },
+    {
+      "path": "workflow/modules/index_vep.nf",
+      "sha256": "634290cb975c2efc52322d65408a6ace1ba67ad21b42e4a876c75b2e7e6780aa"
+    },
+    {
+      "path": "workflow/modules/mutect_caller.nf",
+      "sha256": "cf85ad5514b62cf8011c9c303d947c283fcc361fc83c6abe1b9ff83dd071e942"
+    },
+    {
+      "path": "workflow/modules/read_groups.nf",
+      "sha256": "5dea22fa6dd20514782b1b315947c75db2209dca03e86bd7904865bc5839f8ec"
+    },
+    {
+      "path": "workflow/modules/select_pass.nf",
+      "sha256": "9bf254f04cdbd57ae3e3328f551ced8ac0e9cc8d9955007ca4a082404a9d68c9"
+    },
+    {
+      "path": "workflow/modules/select_positive_tlod.nf",
+      "sha256": "87cd17705617103d72fdbee3cb94a20e266a33ee7b78c0efb9053959c2e81c8e"
+    },
+    {
+      "path": "workflow/modules/trim_galore.nf",
+      "sha256": "55121c4b8e0513d407170aa49adabd18ee62928469507d8d8f1185f780e49a0d"
+    }
+  ]
+}

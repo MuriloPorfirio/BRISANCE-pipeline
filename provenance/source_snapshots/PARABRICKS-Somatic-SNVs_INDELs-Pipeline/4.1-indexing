@@ -1,0 +1,4 @@
+docker run --rm \
+  -v /home/murilo.aguiar/raid-murilo/Processos/06-08-2025-Fastq2bam_output_EXOMAS-LETICIA-FERRO:/d \
+  staphb/samtools:1.19 \
+  bash -lc 'samtools index /d/HJVHNDSX7-1-IDUDI0031.bqsr.bam'

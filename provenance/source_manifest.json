@@ -1,0 +1,159 @@
+{
+  "files": [
+    {
+      "path": "provenance/source_snapshots/GATK-Somatic-Pipeline/1-Alignment-and-SamToBam.sh",
+      "git_blob": "19da06aa86d70896396ee4025c2a9f0714a92bd2",
+      "sha256": "a93c245a84891389e255c93ac3976858882cdcbd00f46aa76f71dcf21580e12b"
+    },
+    {
+      "path": "provenance/source_snapshots/GATK-Somatic-Pipeline/2-MarkDuplicates.sh",
+      "git_blob": "0ef3fe03002cc0876b00ac9f16a6d518ba059c51",
+      "sha256": "3fe83e524ea9490d46102dd7f094f6583381c6d2e5fda18d5e26d1df3e5721ac"
+    },
+    {
+      "path": "provenance/source_snapshots/GATK-Somatic-Pipeline/3-BQSR-table-creation.sh",
+      "git_blob": "d5179a8c4c84d31e78a5aee9819301bbf278fe5b",
+      "sha256": "b44463d11bc241869e4e2f163b687a2078df17cac31126084a16722aed9f4d0b"
+    },
+    {
+      "path": "provenance/source_snapshots/GATK-Somatic-Pipeline/4-ApplyBQSR.sh",
+      "git_blob": "d947755f1c0ededddccf0873a98a610105a9089b",
+      "sha256": "3a53040faebbf56b65940810f64fef1d59f2e119891c66c77cbc92eca1f3cb5a"
+    },
+    {
+      "path": "provenance/source_snapshots/GATK-Somatic-Pipeline/5-VariantCaller.sh",
+      "git_blob": "8afd71061ac255c7bb91cd66910a909a53a569ef",
+      "sha256": "8f087a5fffaebb689530463ca900f9b0a8bef5e890499921714b2f2e133aca03"
+    },
+    {
+      "path": "provenance/source_snapshots/GATK-Somatic-Pipeline/LICENSE",
+      "git_blob": "8673f7ab4c133c404ceee2254ccbe6474ee30df7",
+      "sha256": "68a993d421313d78666806f1a3e7793faaf9c09284ef10402396a23fc30e40fc"
+    },
+    {
+      "path": "provenance/source_snapshots/GATK-Somatic-Pipeline/README.md",
+      "git_blob": "23a5d02761ba5e996e78fc3a63ab970de531f5bb",
+      "sha256": "0672f23c91df053c1159dcb7323fbbe1358fff74109e95dd72155303d16cdce5"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN/01_prepare_pass_vcfs.sh",
+      "git_blob": "6b8184619180520c3e17f6a9f1350bb8cff4d1d0",
+      "sha256": "49b4f85c2878881ac539a73363f828dee7d9d51181a7c5813f67ed9affccdfbb"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN/02_run_bcftools_stats.sh",
+      "git_blob": "a2fae5aa0b10971555983808b6382c6b46be41ae",
+      "sha256": "7301de6596cdaee4e7680159cb3ca5d1b77e9227dd0be8b4c26c9a3153c3a4d0"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN/03_extract_variant_sets.py",
+      "git_blob": "bd19f640ea017bd64253069a1f0732ff57300605",
+      "sha256": "5c23243fb0a7851f7a5232f6a731d37387ce45b701e94ab7d2cbba46b2a1998b"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN/04_compare_snvs.py",
+      "git_blob": "5aae043b508ffe5631eea182d5fd9e4594546f9d",
+      "sha256": "60e0b0dbc01257aa7be74ef7b7f139ccea58aa3583c57c2e1771b3497bbcd97c"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN/05_compare_indels.py",
+      "git_blob": "5b15fe902e97c2343b128f421474a09d0952ea7f",
+      "sha256": "46f7273a4167a9fd5b5860f43d93069a1c6a94bc0861caedb3c1d1e9df978d9e"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN/06_build_summary_table.py",
+      "git_blob": "b0ee3df15ab7e20201e1e47867c9699fac1bbec3",
+      "sha256": "efd1ce727f687c6640cf75c6bcaacb5397062bb8b72a7a437526405ccf969d11"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-BCFtools-Parabricks-vs-DRAGEN/README.md",
+      "git_blob": "8ffcbdfdd20918c30ffd9b4311238c1ab2c65f88",
+      "sha256": "d3abb7a8fc5cd55324bbe620a159f1e93175470b721a1094d931aa7cff068f62"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-ROC-Parabricks-vs-DRAGEN/01_make_reference_sdf.sh",
+      "git_blob": "055a62a9de0c8e86f3b2508ca3d7b0f19af62353",
+      "sha256": "0829b42ff451c9aa5d503fd81660e9429d2b535742051a01a9a63abaa374c65e"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-ROC-Parabricks-vs-DRAGEN/02_add_rtg_score_to_calls_vcf.sh",
+      "git_blob": "bde381a28048ef9bc341b2cd965387f4be118900",
+      "sha256": "4b6514b28381cd83766642b042a310c54bdb8645c3592ef993e2c09215a8d279"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-ROC-Parabricks-vs-DRAGEN/03_run_vcfeval_annotate.sh",
+      "git_blob": "c3b8d385fd498051c1330c80749606f4bdaca5eb",
+      "sha256": "777ca7379f773572c6f9b169bf26ca52144ea5b3ebe8a5d5b09f2ab08460ee20"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-ROC-Parabricks-vs-DRAGEN/04_run_vcf2rocplot_and_rocplot.sh",
+      "git_blob": "f1c57b377cec9b00a6f592597c9186e35d72f034",
+      "sha256": "10e7e99c41eac0ffb9589f91eb450a2ae2114396b2fb97a71b73a784ea5d06ea"
+    },
+    {
+      "path": "provenance/source_snapshots/HG008-ROC-Parabricks-vs-DRAGEN/README.md",
+      "git_blob": "4c060d8e78d3a405d019ed9779ad9a1edfa76c97",
+      "sha256": "3cdd9c9c5bc8be3e6ce8c868b6c393a50c55e1aff4521452715c3deaf334f5f3"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/1-Trimming_w_fastqc.sh",
+      "git_blob": "db3fecd54c76b0472e388ef6171efedd68cea62f",
+      "sha256": "61fd11c74274bbcdc6fea903c3627a1422eae3251089c88b61a101977e2809c9"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/2-fq2bam_PARABRICKS_n_BQSR-table-creation.sh",
+      "git_blob": "a22bd7249e765e8fae5c4f1c5839275d9930ab10",
+      "sha256": "83ac2b2001d0432953261bb3ac15936a7f4d20a5ed9c8cefaa36ab0cf156ade6"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/3-Indexing-n-ReadGroupsChecking.sh",
+      "git_blob": "2c7e26ddd2d531e35a68d3ab5ab919a559dec9ea",
+      "sha256": "c2d24bc12f3a9ec761a91b7ab4e5e8f71dc0e701259a1e53f2ad73c2367c85c2"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/3.1-Indexing-n-AddOrReplaceReadGroups_GATK.sh",
+      "git_blob": "8ff0e26b290c9f7e855115ab7f01ffd385ba370d",
+      "sha256": "028abe687e7978e2b70bb229e53c7c271800feaae53447c75fbf1c27abd1f17f"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/3.2-BaseRecalibrator_GATK.sh",
+      "git_blob": "de8675277d0125f0c99f6c48fd304d3aefcdfd60",
+      "sha256": "705169b07ce69658f46856ebc9a2550df7eea1d8324e374dfe1431402ba193e3"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/4-ApplyBQSR_PARABRICKS.sh",
+      "git_blob": "9baf193a1171b24e298aca184eb006d1c73dee7e",
+      "sha256": "7faee881544b970935dfcacb09d7069791e3fa89bd36fe91aa2ff905958dd584"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/4.1-indexing",
+      "git_blob": "17df552841dad23893ce2b164b87faaed7adea1c",
+      "sha256": "5fd6d1f2a7e9544c077aead7c06cbdc9d71b5f3327b38574a69ae2c88064350b"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/5-Mutect2_PARABRICKS.sh",
+      "git_blob": "dfee576631732dded438be6a01ad964251ef6bcf",
+      "sha256": "fdb114e6aa78242639d6e02c146b5de858c2b122f48a95e566ebc3bd49d553fb"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/6-Variants-Annotations-VEPensembl.sh",
+      "git_blob": "5f3383438e63036ff844d0126885121f37040db4",
+      "sha256": "d103ac97d2b8a21013205f1c9e2a5435546ea6e1aff4388641888796affd8a2e"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/7-Variant_Annotation-dbSNP_PARABRICKS.sh",
+      "git_blob": "31419011b439176ab31a38054bb7c503ea3832e7",
+      "sha256": "ff9737157418a169439d98b9ccbc8c6aec8cf4dc407bf28661101002354a5210"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/LICENSE_Non-Commercial",
+      "git_blob": "8b0df2c3915867566e76ad9102ace4aad94d7016",
+      "sha256": "428591f7ad0bf3eb81eef2a24fbe86ba96de0ec925bd507de2af772c880bedcb"
+    },
+    {
+      "path": "provenance/source_snapshots/PARABRICKS-Somatic-SNVs_INDELs-Pipeline/README.md",
+      "git_blob": "1d005b9ae18cdd21c7b3ec5d528ab2f44f2d4632",
+      "sha256": "9922a28cdf84897e6a07ba75a934db6a21cf36a36510bd0e9d0d31e3e8fa8eca"
+    }
+  ]
+}

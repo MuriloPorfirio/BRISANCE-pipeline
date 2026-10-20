@@ -1,0 +1,28 @@
+Copyright (c) 2026 Murilo Porfírio de Aguiar
+
+BRISANCE Non-Commercial License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of the new BRISANCE software and documentation, to use, copy, modify and share
+it for personal, educational or non-commercial research purposes, subject to
+the following conditions:
+
+1. Commercial use is not permitted without explicit written permission from
+   the copyright holder. This includes selling the software, incorporating
+   it into paid products or services, and using it for internal commercial
+   benefit.
+2. Copies and substantial portions must retain this copyright notice, these
+   terms, and attribution to the author. Modified versions must be identified
+   as modified and retain the non-commercial restriction.
+3. No warranty is provided. The software is supplied "as is", without warranty
+   of merchantability, fitness for a particular purpose or non-infringement.
+   The author is not liable for claims, damages or other liability arising
+   from the software or its use.
+
+Contact for permissions: murilo.porfirio@yahoo.com
+
+Scope: this license applies to new BRISANCE code and documentation for which
+no other license is specified. It does not replace the original terms of the
+preserved snapshots in provenance/source_snapshots, the CPU comparator, or
+the licenses of third-party tools, containers, datasets or dependencies.
+See docs/licensing.md for the component inventory.
