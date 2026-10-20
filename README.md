@@ -4,7 +4,7 @@
 
 BRISANCE processes matched tumor–normal whole-genome sequencing reads with NVIDIA Parabricks and containerized downstream tools. This repository brings together the Nextflow implementation, the historical HG008 procedure, and the analyses supporting the study.
 
-**Status:** private preparation draft. The original Nextflow implementation completed a full HG008 run; the reorganized repository has not been rerun on HG008. Outstanding publication checks are listed in [Release checklist](docs/release_checklist.md). This is research software, not a clinically validated diagnostic pipeline.
+**Status:** public preparation draft. The original Nextflow implementation completed a full HG008 run; the reorganized repository has not been rerun on HG008. Outstanding publication checks are listed in [Release checklist](docs/release_checklist.md). This is research software, not a clinically validated diagnostic pipeline.
 
 ## Start here
 

@@ -1,6 +1,6 @@
 # Release checklist
 
-This repository is a private preparation draft, not a declared v1.0 release.
+This repository is a public preparation draft, not a declared v1.0 release. Public visibility was explicitly authorized by the maintainer; it does not indicate that the release checklist is complete.
 
 ## Included in this preparation
 
@@ -11,6 +11,7 @@ This repository is a private preparation draft, not a declared v1.0 release.
 - [x] Record the full HG008 outcome and the manual CPU-quota intervention honestly.
 - [x] Exclude FASTQs/BAMs/VCFs, cache/reference payloads, credentials, backup/deletion utilities and manuscript drafts.
 - [x] Apply the maintainer's non-commercial policy to new material and retain original license notices.
+- [x] Obtain the maintainer's authorization for public visibility, with draft status and outstanding checks retained.
 
 ## Required before advertising complete manuscript reproducibility
 
@@ -24,6 +25,6 @@ This repository is a private preparation draft, not a declared v1.0 release.
 - [ ] Check scientific-record vs allele-level counting units; 17,455 final VCF records and 17,134 reported SNVs+indels are not interchangeable values.
 - [ ] Review new path-adapted historical command recipes. They are reconstructions, not original executable files or new HG008 validation.
 - [ ] Confirm contributor/author metadata in CITATION.cff and the copyright/license scope.
-- [ ] Review prepared examples, remove any remaining misleading claims, and decide public visibility explicitly.
+- [ ] Review prepared examples and remove any remaining misleading claims before a stable release.
 - [ ] If scientific code/resources are changed for portability or speed, document that delta and test it separately; do not attribute the old full-run result to the changed implementation.
 - [ ] Create a tagged release after review and update manuscript links/citations to that version. Add a DOI only if one has actually been assigned.
