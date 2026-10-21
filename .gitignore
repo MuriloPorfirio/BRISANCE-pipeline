@@ -27,7 +27,11 @@
 *.zip
 # Local configuration and credentials
 *.local.config
+*.local.ini
 local.config
+brisance.json
+configuration-summary.txt
+storage-estimate.json
 .env
 .env.*
 *.pem
@@ -39,3 +43,5 @@ __pycache__/
 .pytest_cache/
 .venv/
 nextflow-*-dist
+# Private Java/Nextflow runtime and setup records
+/.brisance/

@@ -1,74 +1,41 @@
-# Running the Nextflow implementation
+# Running an analysis
 
-Run these commands from the repository root. Use Nextflow 26.04.6/Java 21 and prepare the dependencies described in [Requirements](requirements.md). Do not run scientific processing on a backup server.
+Start with the [repository quick start](../README.md#getting-started). Run on the Linux server containing your data. After [initial setup](setup.md), edit `analysis.local.ini` in a text editor.
 
-## 1. Prepare inputs
+## Prepare the configuration
 
-Copy `assets/hg008_samplesheet.example.csv` to your own samplesheet and replace every `/path/to` with an absolute local path. Columns must be exactly:
+Set a new analysis folder, distinct tumor/normal sample names and the FASTQ paths. For multiple lanes, list each R1/R2 path on its own line, with corresponding mates in the same order. Enter the reference FASTA, each known-sites VCF and the VEP cache root. Indexes and resources must match the chosen reference build.
 
-```text
-sample,role,pair_id,fastq_1,fastq_2
-```
+Choose automatic/custom adapters, quality and minimum read length, GPU indices, thread parameters and CPU/memory limits. The [settings reference](../interface/README.md) lists accepted inputs and options. Keep the executable paths selected by setup under `[runtime]`; no Conda activation is required.
 
-The root `hg008_samplesheet.csv` retains the original Turing paths for provenance and the unchanged launchers; it is not a ready-to-run samplesheet for another server. Always provide your prepared `--input` explicitly.
+Use absolute paths without spaces or shell characters. The analysis folder's parent must already exist. Coordinate shared-server resources before requesting processing.
 
-Use one row per paired input. Only one tumor and one normal sample are supported, with distinct sample names; multiple rows per sample are supported. Roles are `tumor` and `normal`. Pair IDs must be unique, and a FASTQ must not be reused. Files must be nonempty gzip-compressed FASTQs. Names/paths have restrictions checked by `main.nf`; use simple absolute paths without whitespace or shell metacharacters.
+## Check and run
 
-The reference must be the uncompressed GIAB masked GRCh38 `.fasta`, with `.fai`, `.amb`, `.ann`, `.bwt`, `.pac`, `.sa` and the corresponding basename `.dict`. Each of the three known-sites VCFs must have its `.tbi`. VEP cache metadata must exist at `homo_sapiens/113_GRCh38/info.txt` beneath the cache root. See [Data](data.md).
-
-## 2. Validate metadata only
+Review the inputs, resources and storage estimate without writing outputs or processing reads:
 
 ```bash
-nextflow run workflow/main.nf \
-  --mode validate \
-  --input /absolute/path/to/samplesheet.csv \
-  -ansi-log false
+bash interface/run_brisance.sh analysis.local.ini --check
 ```
 
-This checks metadata, not FASTQ contents, gzip integrity, read pairing, biological sample identity or GPU availability.
-
-## 3. Validate reference/cache paths
-
-Copy `conf/paths.example.config` to `paths.local.config` and edit its paths and GPU indices. Then:
+Correct any reported errors in the INI. To request processing:
 
 ```bash
-nextflow run workflow/main.nf \
-  -c paths.local.config \
-  --mode validate-annotate \
-  -ansi-log false
+bash interface/run_brisance.sh analysis.local.ini --run
 ```
 
-This still launches no scientific tasks. It checks reference/index paths, GPU argument syntax and VEP cache metadata; it does not test GPU availability/reserve GPUs, read cache payloads, or test container access. Those checks must be performed separately with the server administrator's authorization.
+The runner asks for settings/storage approval, saves configuration and checks the host, GPUs, Docker, tool versions and file access. Each necessary image download requires permission. Nextflow validates the generated configuration, then `Start this analysis now? [y/N]:` requires a final confirmation before trimming begins.
 
-## 4. Explicit full execution
+Omit `--run` to prepare configuration and check dependencies only. Add `--no-download` to refuse image downloads. The interface requires an interactive terminal for approvals; long runs should use the server's approved persistent-session method. One task runs at a time, without scheduler submission or resource reservation.
 
-Choose new output/work paths, coordinate the selected devices, and ensure that all container images exist locally. Create the report directory before running:
+## Results and further runs
 
-```bash
-mkdir -p reports/my_run
-nextflow -log reports/my_run/nextflow.log run workflow/main.nf \
-  -c paths.local.config \
-  --mode finalize \
-  --outdir results/my_run/stage1 \
-  -work-dir work/my_run \
-  -with-trace reports/my_run/trace.tsv \
-  -with-report reports/my_run/report.html \
-  -with-timeline reports/my_run/timeline.html \
-  -ansi-log false
-```
+The analysis folder contains [results, reports and work files](outputs.md). Inputs/shared caches remain read-only. Reports preserve confirmed settings, dependency observations and the executed pipeline snapshot.
 
-`finalize` starts from raw FASTQs and runs all stages. It is not a final-VCF-only entry point. `--outdir` is the **stage1 directory**; stage2–stage8 default to its siblings. Keep a unique parent per run to prevent published-path collisions. Modes such as `call`, `filter` and `annotate` also include upstream processing.
+Dependency-check failures can be corrected and retried with unchanged settings. Driver/Docker/permissions failures may require the server administrator. A scientific failure preserves diagnostics and intermediates; the fixed runner does not automatically resume, overwrite or clean previous runs. Use a new analysis folder for a fresh attempt or changed configuration.
 
-The configuration and command above reproduce the documented interface, not the Turing launcher's extra environment/occupancy guard. They do not reserve resources or enforce a filesystem occupancy ceiling. The direct command has not been tested on another server.
+Metadata/access checks do not establish FASTQ integrity, biological sample identity or reference/index consistency. Storage estimates are planning guidance, not guaranteed temporary peaks. Other users and quotas can affect capacity; disk usage is not continuously monitored.
 
-## Restart and safety
+## HG008 reproduction
 
-- Inspect errors before choosing `-resume <specific_successful_run_name>`; a validation-only session is not a scientific cache. Work/cache must still exist and match the inputs/code/settings.
-- Changing modes/configuration can change task hashes; confirm `CACHED` in the new trace instead of assuming reuse.
-- Do not modify inputs, reference/cache payloads or completed task directories during a run.
-- Do not use `-stub-run` as a safe validator: these modules do not provide scientific stubs.
-- Publication uses symlinks with overwrite disabled. There is no general overwrite/cleanup safeguard for every possible output collision in a direct command; choose fresh paths.
-
-## Turing-specific scripts
-
-`workflow/run_hg008_100pct.sh`, `hg008_full_run.py` and the 20% launcher retain the original environment-specific implementation. They expect their original Turing data layout, executable and Conda paths. They are preserved as execution evidence, not advertised as universal installation scripts. They do not run on the Mint workstation without the server inputs.
+The [preserved HG008 workflow](hg008-reproduction.md) has a separate samplesheet/parameter interface and Turing-specific launchers. Use it to inspect the evaluated execution procedure; use the settings-file entry point above for a new analysis.

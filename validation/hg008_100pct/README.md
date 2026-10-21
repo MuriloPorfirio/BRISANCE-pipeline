@@ -52,4 +52,16 @@ Full wall-clock time is not a sum of all task durations: normal header adjustmen
 
 End-of-launcher `df` reported 60% occupancy on `/raid` (total 30,601,613,336,576; used 17,236,840,017,920; available 11,828,508,397,568 bytes). This is a filesystem snapshot, not a measured workflow disk peak or isolated BRISANCE footprint.
 
+A subsequent `du -x -h --max-depth=1 work/hg008-100pct` inspection reported approximately **2.3 TiB** of retained task files, excluding the original FASTQs. The rounded directory sizes group as follows:
+
+| Task files | Approximate retained allocation |
+| --- | --- |
+| Trim Galore/FastQC (5 tasks) | 425 GiB |
+| fq2bam (2 tasks) | 563 GiB |
+| ApplyBQSR (2 tasks) | 663 GiB |
+| Read-group adjustment (2 tasks) | 663 GiB |
+| Calling/filtering/annotation/selection | Less than 1 GiB |
+
+These values were transcribed from rounded `du` output, not exact byte measurements or stage-specific temporary peaks. Results published as links are not counted again. The [settings-file runner](../../interface/README.md) estimates additional retained storage at five times the existing compressed FASTQ size and recommends eight times that input size as free space. These are planning factors based on this execution, not validated bounds for other datasets or configurations. Original FASTQs, existing reference/cache resources and Docker images are excluded from the additional-storage estimate.
+
 The runtime sums above use task `realtime` fields. They are separate from the start-to-end interval and the historical CPU–GPU comparison.

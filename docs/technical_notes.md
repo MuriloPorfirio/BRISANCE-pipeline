@@ -2,7 +2,9 @@
 
 ## Workflow configuration
 
-The implemented configuration processes one tumor–normal pair per run, using three alignment GPUs, one ApplyBQSR GPU and two caller GPUs. Thread parameters and resource limits are defined in the scientific modules and `workflow/nextflow.config`. Other GPU counts and execution environments have not been evaluated with this implementation.
+The preserved HG008 configuration processes one tumor–normal pair per run, using three alignment GPUs, one ApplyBQSR GPU and two caller GPUs. Thread parameters and resource limits are defined in the scientific modules and `workflow/nextflow.config`. Other GPU counts and execution environments have not received that full-input evaluation.
+
+The separate [settings-file interface](../interface/README.md) generates identifiers/configuration and checks dependencies/access. Its `--run` option requests the [configurable entry point](../pipeline/README.md), with an additional confirmation after successful checks. GPU indices, CPU/memory/thread settings, adapters and reference-resource paths are propagated to separate configurable modules. The local executor runs one task at a time. Results use regular hard-linked publication without a second full BAM copy; no automatic cleanup occurs. The configuration schema is not accepted by the preserved HG008 entry point. Synthetic orchestration tests and small-data rehearsals must not be described as additional HG008 full-input accuracy benchmarks.
 
 ## Historical analysis material
 
@@ -11,6 +13,8 @@ The VAF/FILTER-analysis scripts and the complete GPU-scaling scripts, raw timing
 The original public file named `05_compare_indels.py` contained table-building code. Its source is retained under `provenance/source_snapshots`. The active replacement implements the documented allele-set comparison and has synthetic test coverage; its HG008 counts have not been re-evaluated.
 
 ## Software and record provenance
+
+The [initial setup](setup.md) is separate from dependency preflight and scientific execution. It pins the standalone Nextflow 26.04.6 distribution and can install a verified private Temurin Java 21 fallback, without changing system Java/Docker/drivers. Runtime/setup checks do not constitute another biological evaluation. Setup records actual selected versions; it does not relabel its fallback Java as the HG008 study's Conda build.
 
 The full-run tables were transcribed from recorded terminal outputs. The original Turing report archive is identified in the validation record but is not bundled here. Historical RTG scripts use a `:dev` image whose binary version and digest have not been recovered. Historical CPU parameters require the corresponding execution logs where generic scripts do not specify them.
 

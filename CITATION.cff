@@ -1,9 +1,0 @@
-cff-version: 1.2.0
-message: "If you use BRISANCE, cite this repository and the versions of the tools used."
-type: software
-title: "BRISANCE: a GPU-accelerated workflow for somatic short-variant detection in whole-genome sequencing data"
-authors:
-  - family-names: "de Aguiar"
-    given-names: "Murilo Porfírio"
-url: "https://github.com/MuriloPorfirio/BRISANCE-pipeline"
-abstract: "Nextflow implementation, historical procedures and study analyses for matched tumor–normal WGS with NVIDIA Parabricks."

@@ -1,5 +1,7 @@
 """Repository packaging/recipe tests. Synthetic inputs only; no Docker/GPU/WGS."""
 import csv
+from collections import Counter
+from datetime import datetime, timedelta
 from decimal import Decimal
 import hashlib
 import importlib.util
@@ -65,6 +67,64 @@ class PackagingTests(unittest.TestCase):
         self.assertEqual(total({'FQ2BAM', 'APPLY_BQSR', 'MUTECT_CALLER'}), 22407)
         self.assertEqual(total({'TRIM_GALORE'}), 295269)
 
+    def test_small_interface_record_scope_counts_images_and_timing(self):
+        record = json.loads((ROOT / 'validation/interface_hg008_small/execution_transcribed.json').read_text())
+        rows = record['tasks']
+        self.assertEqual(len(rows), 15)
+        self.assertEqual(len({row['task_id'] for row in rows}), 15)
+        self.assertEqual(len({row['hash'] for row in rows}), 15)
+        self.assertTrue(all(row['status'] == 'COMPLETED' and row['exit'] == 0 for row in rows))
+        self.assertEqual(Counter(row['process'] for row in rows), {
+            'TRIM_GALORE': 2, 'FQ2BAM': 2, 'APPLY_BQSR': 2, 'ADJUST_READ_GROUPS': 2,
+            'MUTECT_CALLER': 1, 'COMPRESS_RAW_VCF': 1, 'FILTER_MUTECT_CALLS': 1,
+            'SELECT_PASS': 1, 'ANNOTATE_VEP': 1, 'INDEX_VEP': 1, 'SELECT_POSITIVE_TLOD': 1})
+        total = sum((Decimal(row['realtime_seconds']) for row in rows), Decimal(0))
+        self.assertEqual(total, Decimal(record['timing']['sum_reported_realtime_seconds']))
+        first = datetime.strptime(rows[0]['submit'], '%Y-%m-%d %H:%M:%S.%f')
+        last = datetime.strptime(rows[-1]['submit'], '%Y-%m-%d %H:%M:%S.%f')
+        end = last + timedelta(seconds=float(rows[-1]['duration_seconds']))
+        self.assertAlmostEqual((end - first).total_seconds(), float(record['timing']['approximate_task_window_seconds']))
+        self.assertEqual(record['inputs']['pairs_per_sample'], 10000)
+        self.assertEqual(record['inputs']['fastq_files'], 4)
+        self.assertEqual(record['result']['final_variant_records'], 0)
+        images = record['image_ids']
+        self.assertEqual(set(images), {'trim', 'parabricks', 'samtools', 'gatk', 'bcftools', 'vep'})
+        self.assertEqual(sum(image['expected_tasks'] for image in images.values()), 15)
+        self.assertEqual(sum(image['observed_text_occurrences'] for image in images.values()), 30)
+        for image in images.values():
+            self.assertRegex(image['id'], r'^sha256:[0-9a-f]{64}$')
+        self.assertIn('not a biological accuracy benchmark', record['scope'])
+
+    def test_small_interface_warning_correction_is_recorded_as_metadata_only(self):
+        record = json.loads((ROOT / 'validation/interface_hg008_small/execution_transcribed.json').read_text())
+        check = record['post_correction_metadata_check']
+        self.assertEqual(check['run_name'], 'lethal_becquerel')
+        self.assertEqual(check['mode'], 'validate')
+        self.assertEqual(check['input_pairs'], 2)
+        self.assertEqual(check['nextflow_version'], record['nextflow_version'])
+        self.assertEqual(check['main_script_revision_reported_by_nextflow'], record['main_script_revision_reported_by_nextflow'])
+        self.assertFalse(check['undefined_images_warning_observed'])
+        self.assertFalse(check['scientific_processing_started'])
+        self.assertIn('No processing started.', check['reported_message'])
+        self.assertEqual(record['run_name'], 'elegant_yalow')
+        self.assertEqual(len(record['tasks']), 15)
+
+    def test_initial_setup_follow_up_does_not_relabel_the_scientific_run(self):
+        record = json.loads((ROOT / 'validation/interface_hg008_small/execution_transcribed.json').read_text())
+        setup = record['initial_setup_follow_up']
+        self.assertEqual(setup['host'], 'Turing')
+        self.assertIn('--no-download', setup['setup_options'])
+        self.assertTrue(setup['runtime_ready_reported'])
+        self.assertFalse(setup['scientific_processing_started'])
+        check = setup['settings_check']
+        self.assertEqual(check['mode'], '--check')
+        self.assertEqual(check['input_pairs'], 2)
+        self.assertTrue(check['existing_saved_settings_match'])
+        self.assertFalse(check['results_overwritten_or_resumed'])
+        self.assertFalse(check['gpu_or_container_availability_checked'])
+        self.assertEqual(record['run_name'], 'elegant_yalow')
+        self.assertEqual(len(record['tasks']), 15)
+
     def test_example_sheet_has_placeholders_and_all_pairs(self):
         with (ROOT / 'assets/hg008_samplesheet.example.csv').open() as handle:
             rows = list(csv.DictReader(handle))
@@ -83,7 +143,7 @@ class PackagingTests(unittest.TestCase):
 
     def test_current_documentation_local_links_resolve(self):
         for document in ROOT.rglob('*.md'):
-            if 'source_snapshots' in document.parts or '.git' in document.parts:
+            if any(part in document.parts for part in ('source_snapshots', '.git', '.brisance')):
                 continue
             for target in re.findall(r'\[[^\]]*\]\(([^\s)]+)\)', document.read_text()):
                 if '://' in target or target.startswith(('mailto:', '#')):
@@ -94,22 +154,34 @@ class PackagingTests(unittest.TestCase):
     def test_no_scientific_payloads_or_credentials_in_package(self):
         forbidden = ('.fastq', '.fastq.gz', '.fq', '.fq.gz', '.bam', '.bai', '.cram', '.vcf', '.vcf.gz', '.fasta', '.fa', '.pem', '.key')
         for path in ROOT.rglob('*'):
-            if not path.is_file() or '.git' in path.parts or '__pycache__' in path.parts:
+            if not path.is_file() or any(part in path.parts for part in ('.git', '__pycache__', '.brisance')):
                 continue
             self.assertFalse(path.name.endswith(forbidden), str(path))
             self.assertLess(path.stat().st_size, 2_000_000, str(path))
             text = path.read_text(encoding='utf-8')
             self.assertIsNone(re.search(r'(?:ghp_|github_pat_)[A-Za-z0-9_]{30,}', text), str(path))
 
-    def test_license_and_citation_fields(self):
+    def test_license_and_no_citation_request_before_publication(self):
         self.assertIn('Non-Commercial', (ROOT / 'LICENSE').read_text())
-        citation = (ROOT / 'CITATION.cff').read_text()
-        self.assertIn('BRISANCE-pipeline', citation)
-        self.assertIsNone(re.search(r'^(doi|version|date-released):', citation, re.M))
+        self.assertFalse((ROOT / 'CITATION.cff').exists())
+        readme = (ROOT / 'README.md').read_text()
+        self.assertNotIn('CITATION.cff', readme)
+        self.assertNotRegex(readme.lower(), r'how to cite|cite this|citation information|preprint coming')
+
+    def test_project_acknowledgement_and_manuscript_author_order(self):
+        readme = (ROOT / 'README.md').read_text()
+        self.assertIn('InovaCriança', readme)
+        self.assertIn('444217/2023-1', readme)
+        self.assertIn('Brazilian Ministry of Health and CNPq', readme)
+        authors = ['Murilo Porfírio de Aguiar', 'Saloe Bispo', 'Silvia Aparecida Teixeira',
+                   'Rui Manuel Reis', 'Luciane Sussuchi da Silva', 'Letícia Graziela Costa Santos']
+        positions = [readme.index(author) for author in authors]
+        self.assertEqual(positions, sorted(positions))
 
     def test_active_shell_files_parse(self):
         files = list((ROOT / 'workflow').glob('*.sh'))
         files += list((ROOT / 'analysis/variant_comparison').glob('*.sh'))
+        files += [ROOT / 'setup_brisance.sh', ROOT / 'interface/run_brisance.sh']
         for path in files:
             result = subprocess.run(['bash', '-n', str(path)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, str(path) + result.stderr)
