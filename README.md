@@ -2,6 +2,8 @@
 
 BRISANCE is a GPU-accelerated pipeline for somatic short-variant detection in matched tumor–normal whole-genome sequencing data.
 
+**Website, documentation and video tutorials:** [brisance.vercel.app](https://brisance.vercel.app)
+
 BRISANCE stands for *Bioinformatics workflow for Reproducible Identification of Somatic variants and Annotation using NVIDIA and Containerized Execution*.
 
 Nextflow coordinates NVIDIA Parabricks alignment and variant calling, GATK filtering and Ensembl VEP annotation using versioned Docker images. One tumor–normal pair is processed per run, with multiple sequencing lanes supported for each sample.
