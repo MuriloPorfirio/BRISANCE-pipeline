@@ -4,7 +4,7 @@ Three experiments must be kept distinct:
 
 1. Historical fixed CPU–GPU comparison: 219 h 24 min 27 s versus 9 h 38 min 27 s.
 2. Historical GPU/thread-scaling experiments, including fq2bam, MutectCaller and DeepSomatic.
-3. Later functional Nextflow executions on approximately 20% and on all original reads.
+3. The functional Nextflow execution using all original HG008 reads, without subsampling.
 
 The Nextflow run used 3 alignment GPUs and 2 caller GPUs, versus 1 GPU in each stage of the fixed historical comparison. Runtime differences therefore include changes in resource allocation.
 

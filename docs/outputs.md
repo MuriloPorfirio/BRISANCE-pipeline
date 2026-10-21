@@ -25,4 +25,4 @@ The final expression is `INFO/TLOD>0 && INFO/TLOD!="."` on VEP-annotated PASS re
 
 The settings-file runner requests Nextflow trace/report/timeline files automatically; the preserved direct command requires their corresponding options. Trace `realtime` and `duration` are different fields. Host peak RSS is not GPU memory; logical-CPU quota is not observed CPU usage; summed task times can double-count overlapping tasks. See [runtime scope](../analysis/runtime/README.md).
 
-Do not remove a zero-variant VCF as a software failure solely because it is empty. The small prefix test exercised valid empty outputs; scientific adequacy must be evaluated separately.
+A zero-variant VCF is not, by itself, evidence of software failure; scientific adequacy must be evaluated separately.

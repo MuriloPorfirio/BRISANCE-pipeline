@@ -8,7 +8,7 @@ Before requesting analysis, the server administrator must have prepared compatib
 
 ## Tested environment, not minimum requirements
 
-The HG008 tests used a Linux DGX A100 server with 256 logical CPUs, approximately 2 TiB host RAM, eight NVIDIA A100-SXM4-80GB GPUs, NVIDIA driver 535.216.03 and Docker Engine 27.1.2. Only the explicitly selected GPUs were exposed to each task. Other hardware configurations have not been validated by these tests.
+The full-input HG008 evaluation used a Linux DGX A100 server with 256 logical CPUs, approximately 2 TiB host RAM, eight NVIDIA A100-SXM4-80GB GPUs, NVIDIA driver 535.216.03 and Docker Engine 27.1.2. Only the explicitly selected GPUs were exposed to each task. Other hardware configurations have not received this evaluation.
 
 The tested Nextflow version was **26.04.6**, using **OpenJDK 21.0.10** from the existing Conda environment. The preserved HG008 workflow manifest accepts later Nextflow versions, but that is not evidence that they were tested. The configurable entry point requires 26.04.6; initial setup pins its verified standalone distribution and accepts Java 17–26. Its optional Temurin Java 21 fallback is documented separately in [Setup](setup.md). The Java 11 system installation was not used for successful launches.
 
@@ -24,8 +24,6 @@ The tested Nextflow version was **26.04.6**, using **OpenJDK 21.0.10** from the 
 | Annotation | `ensemblorg/ensembl-vep:release_113.0`, cache 113 GRCh38 |
 
 Scientific tasks use `--pull never`. The settings-file runner checks required images before analysis and offers a separate approval for each necessary download; `--no-download` refuses them. The preserved direct HG008 workflow instead expects the images to have been obtained beforehand. Version tags are not immutable image digests. The configurable runner records and binds the exact checked local image IDs. Current pulls cannot establish a historical digest.
-
-The subsampling helper additionally uses a pinned seqtk 1.4 image. It is not needed for a run on all original reads.
 
 ## Permissions and server preparation
 

@@ -67,7 +67,7 @@ See [Usage](docs/usage.md) for run options and [Outputs](docs/outputs.md) for th
 
 ## HG008 evaluation
 
-The full-input HG008 run completed 18 tasks and produced 17,455 final VCF records, matching the historical output for `CHROM`, `POS`, `REF` and `ALT`. [Execution settings, timings and comparison scope](validation/hg008_100pct/README.md) are provided with the validation record. The settings-file interface was tested separately with [small HG008 inputs](validation/interface_hg008_small/README.md).
+The HG008 evaluation used all original reads, without subsampling. The run completed 18 tasks and produced 17,455 final VCF records, matching the historical output for `CHROM`, `POS`, `REF` and `ALT`. [Execution settings, timings and comparison scope](validation/hg008_100pct/README.md) are provided with the validation record.
 
 The original HG008 commands are retained under [HG008 reproduction](docs/hg008-reproduction.md). Dataset and reference sources are listed in [Data and references](docs/data.md).
 

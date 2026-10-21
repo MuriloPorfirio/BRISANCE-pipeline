@@ -73,4 +73,4 @@ The configuration and command above reproduce the documented interface, not the 
 
 ## Turing-specific scripts
 
-`workflow/run_hg008_100pct.sh`, `hg008_full_run.py` and the 20% launcher retain the original environment-specific implementation. They expect their original Turing data layout, executable and Conda paths. They are preserved as execution evidence, not advertised as universal installation scripts. They do not run on the Mint workstation without the server inputs.
+`workflow/run_hg008_100pct.sh` and `workflow/hg008_full_run.py` retain the original environment-specific full-input implementation. They expect their original Turing data layout, executable and Conda paths. They are preserved as execution evidence, not advertised as universal installation scripts. They do not run on the Mint workstation without the server inputs.
