@@ -30,6 +30,42 @@ DEFAULT_RESOURCES = {
     'utilities': {'cpus': 2, 'memory_gb': 4},
 }
 SHEET_COLUMNS = ['sample', 'role', 'pair_id', 'fastq_1', 'fastq_2']
+BAM_COLUMNS = ['sample', 'role', 'bam', 'bam_index']
+
+
+def bam_mode(config):
+    return config.get('input_mode', 'fastq') == 'bam'
+
+
+def active_resources(config):
+    names = ('calling', 'filtering', 'annotation', 'utilities') if bam_mode(config) else tuple(DEFAULT_RESOURCES)
+    if config.get('qc') or config.get('somatic'):
+        names = (*names, 'read_groups')
+    return {name: config['resources'][name] for name in names}
+
+
+def validate_bams(rows):
+    if not isinstance(rows, list) or len(rows) != 2:
+        raise ValueError('BAM input requires exactly one tumor and one normal.')
+    result, roles, samples, identities = [], set(), set(), set()
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != set(BAM_COLUMNS):
+            raise ValueError('BAM entries require: ' + ','.join(BAM_COLUMNS))
+        sample, role = identifier(row['sample']), row['role']
+        if role not in ('tumor', 'normal') or role in roles or sample in samples:
+            raise ValueError('Distinct tumor/normal samples and roles are required.')
+        roles.add(role)
+        samples.add(sample)
+        item = {'sample': sample, 'role': role}
+        for field, suffix in (('bam', ('.bam',)), ('bam_index', ('.bai',))):
+            path = readable_file(row[field], suffix)
+            identity = (path.stat().st_dev, path.stat().st_ino)
+            if identity in identities:
+                raise ValueError('A BAM or index is reused: ' + str(path))
+            identities.add(identity)
+            item[field] = str(path)
+        result.append(item)
+    return result
 
 
 def identifier(value):
@@ -136,10 +172,10 @@ def validate_samples(rows):
     return normalized
 
 
-def reference_bundle(value):
+def reference_bundle(value, alignment=True):
     fasta = readable_file(value, ('.fa', '.fasta', '.fna'))
     indices = [readable_file(str(fasta) + suffix) for suffix in
-               ('.fai', '.amb', '.ann', '.bwt', '.pac', '.sa')]
+               (('.fai', '.amb', '.ann', '.bwt', '.pac', '.sa') if alignment else ('.fai',))]
     dictionary = fasta.with_suffix('.dict')
     if not dictionary.is_file():
         dictionary = Path(str(fasta) + '.dict')
@@ -213,13 +249,16 @@ def validate_resources(value):
 
 def validate_configuration(config):
     required = {'schema_version', 'analysis_dir', 'samples', 'reference', 'trimming', 'resources'}
-    if (not isinstance(config, dict) or set(config) != required or
+    if (not isinstance(config, dict) or not required <= set(config) or
+            set(config) - required - {'input_mode', 'somatic', 'qc'} or
             type(config['schema_version']) is not int or config['schema_version'] != SCHEMA_VERSION):
         raise ValueError('Unsupported configuration schema or unknown configuration fields.')
     root = absolute_path(config['analysis_dir'])
     if not IDENTIFIER.fullmatch(root.name):
         raise ValueError('Choose a named analysis folder, for example /data/analysis_01.')
-    rows = validate_samples(config['samples'])
+    if config.get('input_mode', 'fastq') not in ('fastq', 'bam'):
+        raise ValueError('input_mode must be fastq or bam.')
+    rows = validate_bams(config['samples']) if bam_mode(config) else validate_samples(config['samples'])
     ref = config['reference']
     if not isinstance(ref, dict) or set(ref) != {'fasta', 'known_sites', 'assembly', 'vep_cache_dir', 'vep_cache_version'}:
         raise ValueError('Missing or unknown reference setting.')
@@ -227,9 +266,14 @@ def validate_configuration(config):
         raise ValueError('Select GRCh38 or GRCh37. Other assemblies are not covered by this configuration interface.')
     if type(ref['vep_cache_version']) is not int or ref['vep_cache_version'] != 113:
         raise ValueError('This software configuration uses VEP/cache version 113.')
-    fasta, indices = reference_bundle(ref['fasta'])
+    fasta, indices = reference_bundle(ref['fasta'], alignment=not bam_mode(config))
     reference_names = {path.name for path in [fasta, *indices]}
-    sites, _ = known_sites_files(ref['known_sites'], reference_names)
+    if bam_mode(config):
+        if ref['known_sites']:
+            raise ValueError('BAM mode skips BQSR; omit known_sites.')
+        sites = []
+    else:
+        sites, _ = known_sites_files(ref['known_sites'], reference_names)
     cache = cache_directory(ref['vep_cache_dir'], ref['assembly'], ref['vep_cache_version'])
     trim = config['trimming']
     if not isinstance(trim, dict) or set(trim) != {'adapter_mode', 'adapter_r1', 'adapter_r2', 'quality', 'min_read_length'}:
@@ -243,7 +287,7 @@ def validate_configuration(config):
     else:
         adapters = {key: adapter_sequence(trim[key]) for key in ('adapter_r1', 'adapter_r2')}
     resources = validate_resources(config['resources'])
-    return {
+    result = {
         'schema_version': SCHEMA_VERSION, 'analysis_dir': str(root), 'samples': rows,
         'reference': {'fasta': str(fasta), 'known_sites': sites, 'assembly': ref['assembly'],
                       'vep_cache_dir': str(cache), 'vep_cache_version': 113},
@@ -252,6 +296,25 @@ def validate_configuration(config):
                      'min_read_length': positive_int(trim['min_read_length'])},
         'resources': resources,
     }
+    if bam_mode(config):
+        result['input_mode'] = 'bam'
+    if 'somatic' in config:
+        somatic = config['somatic']
+        if not isinstance(somatic, dict) or set(somatic) != {'pon', 'pon_prepared'} or type(somatic['pon_prepared']) is not bool:
+            raise ValueError('somatic requires pon and boolean pon_prepared.')
+        pon = readable_file(somatic['pon'], ('.vcf.gz',))
+        readable_file(str(pon) + '.tbi')
+        if somatic['pon_prepared']:
+            readable_file(str(pon) + '.pon')
+        # All resources share one task folder during calling.
+        if any((pon.name + suffix) in reference_names for suffix in ('', '.tbi', '.pon')):
+            raise ValueError('PoN and reference resource names collide.')
+        result['somatic'] = {'pon': str(pon), 'pon_prepared': somatic['pon_prepared']}
+    if 'qc' in config:
+        if config['qc'] != {'enabled': True} or type(config['qc']['enabled']) is not bool:
+            raise ValueError('qc must contain enabled = true, or be omitted.')
+        result['qc'] = {'enabled': True}
+    return result
 
 
 def nearest_existing_directory(path):
@@ -264,6 +327,15 @@ def nearest_existing_directory(path):
 
 
 def storage_estimate(config):
+    if bam_mode(config):
+        filesystem = nearest_existing_directory(Path(config['analysis_dir']))
+        return {'input_bytes': sum(Path(row['bam']).stat().st_size for row in config['samples']),
+                'estimated_additional_bytes': 32 * GIB, 'recommended_available_bytes': 64 * GIB,
+                'available_bytes': shutil.disk_usage(filesystem).free, 'checked_directory': str(filesystem),
+                'estimate_factor': None, 'recommendation_factor': None,
+                'minimum_planning_allowance_bytes': 64 * GIB,
+                'basis': 'Unmeasured planning allowance for calling, VCFs, QC and optional PoN preparation; monitor actual use.',
+                'scope': 'Existing BAMs are mounted read-only, not copied or realigned. No BAM storage is reclaimed.'}
     input_bytes = sum(Path(row[key]).stat().st_size for row in config['samples']
                       for key in ('fastq_1', 'fastq_2'))
     root = Path(config['analysis_dir'])
@@ -288,6 +360,22 @@ def human_bytes(value):
 
 
 def execution_summary(config, estimate):
+    if bam_mode(config):
+        lines = ['BRISANCE — existing BAM configuration', '', 'Analysis: matched tumor-normal WGS',
+                 'Analysis folder: ' + config['analysis_dir'], 'Input mode: BAM (no trimming, alignment, BQSR or reheader)']
+        for row in config['samples']:
+            lines += [row['role'] + ': ' + row['sample'], '  BAM: ' + row['bam'], '  BAI: ' + row['bam_index']]
+        lines += ['Reference: ' + config['reference']['fasta'], 'Assembly: ' + config['reference']['assembly'],
+                  'VEP/cache: 113', 'QC on supplied BAMs: ' + str(bool(config.get('qc'))),
+                  'PoN: ' + config.get('somatic', {}).get('pon', 'disabled'),
+                  'PoN index supplied as prepared: ' + str(config.get('somatic', {}).get('pon_prepared', False)),
+                  'Recommended available storage: ' + human_bytes(estimate['recommended_available_bytes']),
+                  'Available: ' + human_bytes(estimate['available_bytes']), estimate['basis'],
+                  'BAM SM, coordinate order, sequence dictionary and indexed access are checked before calling.',
+                  'QC reports describe these supplied BAMs and do not filter variants.']
+        for stage, settings in active_resources(config).items():
+            lines.append(stage + ': ' + str(settings))
+        return '\n'.join(lines)
     root, res, ref, trim = Path(config['analysis_dir']), config['resources'], config['reference'], config['trimming']
     lines = ['BRISANCE — configuration summary', '',
              'Analysis: matched tumor-normal WGS', 'Sequencing: paired-end', '']
@@ -330,6 +418,9 @@ def execution_summary(config, estimate):
     lines += ['', 'Checks: file existence, names, sizes, reference-index presence and VEP cache metadata.',
               'FASTQ contents, reference/index integrity, known-sites build compatibility and GPU/container availability have not been checked.',
               'This configuration step does not process sequencing data. Environment checks, if requested, are a separate step.']
+    if config.get('somatic') or config.get('qc'):
+        lines += ['PoN: ' + config.get('somatic', {}).get('pon', 'disabled'),
+                  'QC metrics on recalibrated BAMs: ' + str(bool(config.get('qc')))]
     return '\n'.join(lines)
 
 
@@ -479,7 +570,7 @@ def save_configuration(config, estimate, summary):
         json.dump(config, handle, indent=2)
         handle.write('\n')
     with (root / 'samplesheet.csv').open('x', newline='') as handle:
-        writer = csv.DictWriter(handle, fieldnames=SHEET_COLUMNS)
+        writer = csv.DictWriter(handle, fieldnames=BAM_COLUMNS if bam_mode(config) else SHEET_COLUMNS)
         writer.writeheader()
         writer.writerows(config['samples'])
     with (root / 'reports/configuration-summary.txt').open('x') as handle:

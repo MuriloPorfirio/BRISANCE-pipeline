@@ -214,8 +214,8 @@ class EnvironmentCheck:
         host = host_capacity()
         if host['system'] != 'Linux' or host['machine'] not in ('x86_64', 'amd64'):
             raise CheckFailure('This image bundle is checked on Linux x86_64. Other platforms require a separately verified image bundle.')
-        requested_cpu = max(stage['cpus'] for stage in self.config['resources'].values())
-        requested_ram = max(stage['memory_gb'] for stage in self.config['resources'].values()) * configuration.GIB
+        requested_cpu = max(stage['cpus'] for stage in configuration.active_resources(self.config).values())
+        requested_ram = max(stage['memory_gb'] for stage in configuration.active_resources(self.config).values()) * configuration.GIB
         if host['logical_cpus_available'] <= requested_cpu:
             raise CheckFailure('CPU limits require {} logical CPUs plus capacity for Nextflow; {} are visible. Reduce limits or use a suitable server.'.format(
                 requested_cpu, host['logical_cpus_available']))
@@ -276,7 +276,8 @@ class EnvironmentCheck:
         return {'server_version': version, **info}
 
     def check_gpus(self):
-        requested = sorted({device for stage in ('alignment', 'bqsr', 'calling')
+        stages = ('calling',) if configuration.bam_mode(self.config) else ('alignment', 'bqsr', 'calling')
+        requested = sorted({device for stage in stages
                             for device in self.config['resources'][stage]['gpu_devices']})
         output = self.run_command(['nvidia-smi', '-i', ','.join(map(str, requested)),
             '--query-gpu=index,uuid,name,memory.total,memory.free,utilization.gpu,driver_version',
@@ -404,11 +405,17 @@ class EnvironmentCheck:
         return {'visible_gpu_uuids': sorted(visible), 'scope': 'NVIDIA runtime/driver visibility, not a CUDA kernel or scientific smoke test'}
 
     def check_mounts(self):
-        files = [Path(row[field]) for row in self.config['samples'] for field in ('fastq_1', 'fastq_2')]
-        fasta, reference_indices = configuration.reference_bundle(self.config['reference']['fasta'])
+        fields = ('bam', 'bam_index') if configuration.bam_mode(self.config) else ('fastq_1', 'fastq_2')
+        files = [Path(row[field]) for row in self.config['samples'] for field in fields]
+        fasta, reference_indices = configuration.reference_bundle(self.config['reference']['fasta'], alignment=not configuration.bam_mode(self.config))
         files += [fasta, *reference_indices]
         for site in self.config['reference']['known_sites']:
             files += [Path(site), Path(site + '.tbi')]
+        if self.config.get('somatic'):
+            pon = self.config['somatic']['pon']
+            files += [Path(pon), Path(pon + '.tbi')]
+            if self.config['somatic']['pon_prepared']:
+                files.append(Path(pon + '.pon'))
         cache = self.config['reference']
         files += [Path(cache['vep_cache_dir']) / 'homo_sapiens' / ('113_' + cache['assembly']) / 'info.txt']
         image_id = self.images[IMAGES[2]['image']]

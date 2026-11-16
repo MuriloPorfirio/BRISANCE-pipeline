@@ -8,6 +8,7 @@ process MUTECT_CALLER {
     tuple val(tumor_sample), path(tumor_bam), path(tumor_index), val(normal_sample), path(normal_bam), path(normal_index)
     path reference
     path reference_indices
+    path pon_files
     val options
     val output_dir
 
@@ -16,11 +17,13 @@ process MUTECT_CALLER {
     tuple val(tumor_sample), val(normal_sample), path('mutectcaller_versions.txt'), path('run_configuration.txt'), emit: provenance
 
     script:
+    def ponArgs = pon_files ? "--pon \"${pon_files[0]}\"" : ''
     """
     mkdir -p tmp
     pbrun mutectcaller \
         --num-htvc-threads ${options.htvc_threads} \
         --ref "${reference}" \
+        ${ponArgs} \
         --in-tumor-bam "${tumor_bam}" \
         --in-normal-bam "${normal_bam}" \
         --out-vcf "${tumor_sample}_vs_${normal_sample}.vcf" \
@@ -33,6 +36,7 @@ process MUTECT_CALLER {
     printf '%s\\n' \
         'tumor_sample=${tumor_sample}' \
         'normal_sample=${normal_sample}' \
+        'pon_enabled=${pon_files ? true : false}' \
         'tumor_bam=${tumor_bam}' \
         'tumor_index=${tumor_index}' \
         'normal_bam=${normal_bam}' \

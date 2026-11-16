@@ -26,9 +26,11 @@ RESOURCE_SECTIONS = {
     'utilities': ('utilities', {'cpu_limit': 'cpus', 'memory_gb': 'memory_gb'}),
 }
 FIELDS = {
-    'analysis': {'folder'},
-    'tumor': {'sample', 'r1', 'r2'},
-    'normal': {'sample', 'r1', 'r2'},
+    'analysis': {'folder', 'input_mode'},
+    'tumor': {'sample', 'r1', 'r2', 'bam', 'bam_index'},
+    'normal': {'sample', 'r1', 'r2', 'bam', 'bam_index'},
+    'somatic': {'pon', 'pon_prepared'},
+    'qc': {'enabled'},
     'reference': {'fasta', 'assembly', 'known_sites', 'vep_cache', 'vep_cache_version'},
     'trimming': {'adapters', 'adapter_r1', 'adapter_r2', 'quality', 'min_read_length'},
     'runtime': {'java', 'nextflow', 'check_environment', 'allow_downloads'},
@@ -84,10 +86,10 @@ def parse_settings(path, content=None):
         except ValueError as exc:
             raise ValueError('[{}] {}: {}'.format(section, key, exc)) from exc
 
-    def boolean(key, default):
-        value = str(get('runtime', key, str(default))).lower()
+    def boolean(key, default, section='runtime'):
+        value = str(get(section, key, str(default))).lower()
         if value not in configparser.ConfigParser.BOOLEAN_STATES:
-            raise ValueError('[runtime] {} must be true or false.'.format(key))
+            raise ValueError('[{}] {} must be true or false.'.format(section, key))
         return configparser.ConfigParser.BOOLEAN_STATES[value]
 
     def paths(section, key):
@@ -100,9 +102,20 @@ def parse_settings(path, content=None):
     def gpu_list(section):
         return configuration.devices(','.join(part.strip() for part in get(section, 'gpus').split(',')))
 
+    input_mode = get('analysis', 'input_mode', 'fastq').lower()
+    if input_mode not in ('fastq', 'bam'):
+        raise ValueError('[analysis] input_mode must be fastq or bam.')
     rows = []
     for role in ('tumor', 'normal'):
         sample = configuration.identifier(get(role, 'sample'))
+        forbidden = {'r1', 'r2'} if input_mode == 'bam' else {'bam', 'bam_index'}
+        if forbidden & set(sections.get(role, {})):
+            raise ValueError('Do not mix BAM and FASTQ settings in [{}].'.format(role))
+        if input_mode == 'bam':
+            bam = get(role, 'bam')
+            rows.append({'sample': sample, 'role': role, 'bam': bam,
+                         'bam_index': get(role, 'bam_index', bam + '.bai')})
+            continue
         r1, r2 = paths(role, 'r1'), paths(role, 'r2')
         if len(r1) != len(r2):
             raise ValueError('[{}] R1/R2 counts differ ({} versus {}). Put matching mates in the same list order.'.format(role, len(r1), len(r2)))
@@ -113,7 +126,7 @@ def parse_settings(path, content=None):
     for section, (stage, mapping) in RESOURCE_SECTIONS.items():
         for external, internal in mapping.items():
             resources[stage][internal] = integer(section, external, resources[stage][internal])
-    resources['alignment']['gpu_devices'] = gpu_list('alignment')
+    resources['alignment']['gpu_devices'] = gpu_list('alignment') if input_mode == 'fastq' else [0]
     resources['bqsr']['gpu_devices'] = [integer('bqsr', 'gpu', resources['alignment']['gpu_devices'][0], minimum=0)]
     resources['calling']['gpu_devices'] = gpu_list('calling')
     adapter_mode = get('trimming', 'adapters', 'auto').lower()
@@ -126,13 +139,24 @@ def parse_settings(path, content=None):
         'schema_version': configuration.SCHEMA_VERSION,
         'analysis_dir': get('analysis', 'folder'), 'samples': rows,
         'reference': {'fasta': get('reference', 'fasta'), 'assembly': get('reference', 'assembly', 'GRCh38'),
-                      'known_sites': paths('reference', 'known_sites'), 'vep_cache_dir': get('reference', 'vep_cache'),
+                      'known_sites': paths('reference', 'known_sites') if input_mode == 'fastq' else [], 'vep_cache_dir': get('reference', 'vep_cache'),
                       'vep_cache_version': integer('reference', 'vep_cache_version', 113)},
         'trimming': {'adapter_mode': adapter_mode, 'adapter_r1': adapter_r1 or None, 'adapter_r2': adapter_r2 or None,
                      'quality': integer('trimming', 'quality', 20, minimum=0),
                      'min_read_length': integer('trimming', 'min_read_length', 20)},
         'resources': resources,
     }
+    # Preserve the exact legacy JSON when optional features are not requested.
+    if input_mode == 'bam':
+        config['input_mode'] = 'bam'
+    pon = get('somatic', 'pon', '')
+    prepared = boolean('pon_prepared', False, 'somatic')
+    if prepared and not pon:
+        raise ValueError('pon_prepared requires [somatic] pon.')
+    if pon:
+        config['somatic'] = {'pon': pon, 'pon_prepared': prepared}
+    if boolean('enabled', False, 'qc'):
+        config['qc'] = {'enabled': True}
     runtime = {'java': get('runtime', 'java', '') or None, 'nextflow': get('runtime', 'nextflow', '') or None,
                'check_environment': boolean('check_environment', True), 'allow_downloads': boolean('allow_downloads', True)}
     return config, runtime
@@ -190,13 +214,18 @@ def main(argv=None):
     mode.add_argument('--prepare-only', action='store_true', help='Ask for storage/configuration confirmation and save files, without running environment checks.')
     mode.add_argument('--run', action='store_true', help='Check the environment and configurable workflow, then ask separately before starting a fresh analysis.')
     parser.add_argument('--no-download', action='store_true', help='Refuse missing/wrong images rather than offering downloads.')
+    parser.add_argument('--yes', action='store_true', help='With --run only: explicitly authorize unattended execution; disables image downloads and records this choice.')
     args = parser.parse_args(argv)
+    if args.yes and not args.run:
+        parser.error('--yes requires --run.')
     try:
         source = Path(args.settings).expanduser().resolve(strict=True)
         if not source.is_file() or source.stat().st_size > 1024 * 1024:
             raise ValueError('Use a regular settings file no larger than 1 MiB.')
         payload = source.read_bytes()
         raw, runtime = parse_settings(source, content=payload.decode('utf-8'))
+        if args.yes:
+            runtime['allow_downloads'] = False
         if Path(raw['analysis_dir']).is_symlink():
             raise ValueError('Choose a real analysis folder, not a symlink.')
         config = configuration.validate_configuration(raw)
@@ -212,11 +241,11 @@ def main(argv=None):
         if args.check:
             print('SETTINGS CHECK OK. Nothing written; no external commands or analysis started.')
             return 0
-        if not sys.stdin.isatty():
+        if not args.yes and not sys.stdin.isatty():
             raise ValueError('Confirmation needs an interactive terminal. Use --check for a read-only settings check.')
         if estimate['available_bytes'] < estimate['recommended_available_bytes']:
             print('WARNING: free space is below the recommendation; this operation can prepare/check settings only, not approve an analysis.')
-        if not configuration.yes_no('Continue with these settings and the storage recommendation?', default=False):
+        if not args.yes and not configuration.yes_no('Continue with these settings and the storage recommendation?', default=False):
             print('Cancelled. No configuration, downloads or analysis started.')
             return 0
         if source.read_bytes() != payload:
@@ -224,10 +253,12 @@ def main(argv=None):
         if not reuse:
             configuration.save_configuration(config, estimate, summary)
         report = archive_settings(source, config, estimate, summary, payload)
+        if args.yes:
+            (report / 'unattended-authorization.txt').write_text('Explicit --run --yes supplied; downloads disabled.\n')
         print('Settings record: ' + str(report))
         if args.run:
             import execute_analysis
-            return execute_analysis.execute(config, runtime, report, no_download=args.no_download)
+            return execute_analysis.execute(config, runtime, report, no_download=args.no_download, approved=args.yes)
         if args.prepare_only or not runtime['check_environment']:
             print('Configuration saved. Environment checks not requested; no analysis started.')
             return 0

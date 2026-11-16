@@ -86,3 +86,9 @@ Existing identical settings can be checked again. Changed configurations require
 Estimated additional storage is `5 × compressed input bytes`; recommended free space is `max(8 × input bytes, 32 GiB)`. The factors derive from approximately 2.3 TiB of retained work for 500,242,287,130 input bytes in the HG008 full run. The 32-GiB floor is a planning policy for small inputs, not a measured minimum.
 
 The estimate assumes retained intermediates, no extra original FASTQ copy and no duplicate BAM publication copy. Existing references, caches and images are excluded. Compression, configuration and temporary peaks can change requirements. Quotas and other users are not accounted for or reserved. `--run` refuses launch below the recommendation; disk usage is not continuously monitored after launch.
+
+## Optional BAM input, PoN and QC (v1.1.0)
+
+See the [BAM/PoN/QC guide](../docs/bam-pon-qc.md) and [BAM settings example](brisance.bam.example.ini). `[analysis] input_mode = bam` uses `bam` and optional `bam_index` instead of `r1/r2` within each sample section. `[somatic] pon` enables a user-provided panel; `[qc] enabled = true` collects independent metrics. The panel is separate from the matched-normal BAM. These features are disabled in legacy INIs.
+
+`--run --yes` is an explicit unattended execution option; it disables downloads and preserves all technical preflight checks. It never resumes or overwrites a scientific run.

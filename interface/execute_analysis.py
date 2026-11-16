@@ -28,9 +28,11 @@ def write_json(path, value):
 
 
 def execution_parameters(config, images):
-    fasta, indices = configuration.reference_bundle(config['reference']['fasta'])
-    _, site_indices = configuration.known_sites_files(config['reference']['known_sites'],
-        {path.name for path in [fasta, *indices]})
+    fasta, indices = configuration.reference_bundle(config['reference']['fasta'], alignment=not configuration.bam_mode(config))
+    site_indices = []
+    if not configuration.bam_mode(config):
+        _, site_indices = configuration.known_sites_files(config['reference']['known_sites'],
+            {path.name for path in [fasta, *indices]})
     if set(images) != set(IMAGE_KEYS) or any(not re.fullmatch(r'sha256:[0-9a-f]{64}', value) for value in images.values()):
         raise ValueError('Six checked immutable Docker image IDs are required.')
     return {'configuration': config, 'bundle': {'reference_indices': list(map(str, indices)),
@@ -122,10 +124,20 @@ def stream_command(command, directory, env):
             process.stdout.close()
 
 
+def expected_tasks(config):
+    count = 9 if configuration.bam_mode(config) else len(config['samples']) + 13
+    if config.get('qc'):
+        count += 2
+    if config.get('somatic'):
+        # Validate/prepare PoN + postpon; prepon only when not supplied prepared.
+        count += 2 if config['somatic']['pon_prepared'] else 3
+    return count
+
+
 def completion_check(config, report_dir):
     with (report_dir / 'trace.tsv').open(newline='') as handle:
         tasks = list(csv.DictReader(handle, delimiter='\t'))
-    if len(tasks) != len(config['samples']) + 13 or any(row['status'] != 'COMPLETED' or row['exit'] != '0' for row in tasks):
+    if len(tasks) != expected_tasks(config) or any(row['status'] != 'COMPLETED' or row['exit'] != '0' for row in tasks):
         raise ValueError('The trace does not contain all expected successful fresh tasks. Inspect the saved reports.')
     root = Path(config['analysis_dir']) / 'results'
     for path in root.rglob('*'):
@@ -142,11 +154,16 @@ def completion_check(config, report_dir):
         counts = {row['set']: int(row['variant_records']) for row in csv.DictReader(handle, delimiter='\t')}
     if set(counts) != {'annotated_PASS', 'PASS_TLOD'} or any(value < 0 for value in counts.values()):
         raise ValueError('Invalid final count report.')
+    if config.get('qc'):
+        for sample in names.values():
+            metrics = root / 'qc' / sample / 'qc_metrics'
+            if not metrics.is_dir() or not any(p.is_file() and p.stat().st_size for p in metrics.rglob('*')):
+                raise ValueError('Missing QC metric files for ' + sample)
     return {'tasks_completed': len(tasks), 'final_vcf': str(vcf), 'counts': counts,
             'scope': 'Execution/regular-file checks, not a biological accuracy benchmark.'}
 
 
-def execute(config, runtime, settings_record, no_download=False):
+def execute(config, runtime, settings_record, no_download=False, approved=False):
     if not runtime['check_environment']:
         raise ValueError('--run requires [runtime] check_environment = true.')
     root = Path(config['analysis_dir'])
@@ -186,9 +203,10 @@ def execute(config, runtime, settings_record, no_download=False):
         code = stream_command(validation_command + ['--mode', 'validate', '-work-dir', str(preflight / 'work'), '-ansi-log', 'false'], preflight, checker.env)
         if code:
             return code
-        print('\nWorkflow: trimming/FastQC -> alignment -> BQSR -> read groups -> somatic calling -> filtering -> VEP -> positive TLOD.')
+        print('\nWorkflow: ' + ('checked existing BAMs' if configuration.bam_mode(config) else 'trimming/FastQC -> alignment -> BQSR -> read groups') +
+              ' -> optional QC/PoN -> somatic calling -> filtering -> VEP -> positive TLOD.')
         print('One task at a time; selected GPUs are not reserved. Results will be regular files in ' + str(root / 'results'))
-        if not configuration.yes_no('Start this analysis now?', default=False):
+        if not approved and not configuration.yes_no('Start this analysis now?', default=False):
             print('Cancelled before analysis. Settings and preflight reports were preserved.')
             return 0
         # Refresh observations after the final prompt. Never trust a stale GPU report.

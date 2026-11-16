@@ -39,3 +39,7 @@ Metadata/access checks do not establish FASTQ integrity, biological sample ident
 ## HG008 reproduction
 
 The [preserved HG008 workflow](hg008-reproduction.md) has a separate samplesheet/parameter interface and Turing-specific launchers. Use it to inspect the evaluated execution procedure; use the settings-file entry point above for a new analysis.
+
+## Existing BAMs and optional PoN/QC
+
+Version 1.1.0 also accepts already processed BAMs and optional user-provided panels of normals. See [BAM input, PoN and QC](bam-pon-qc.md) for the INI fields, outputs, unattended operation, resource limits and scientific interpretation. Old FASTQ settings remain supported without enabling these features.

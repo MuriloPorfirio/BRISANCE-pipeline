@@ -26,6 +26,13 @@ class ExecutionTests(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.config = fixtures.cfg.validate_configuration(copy.deepcopy(self.fixture.config))
+        # Launch-control tests are independent of the developer machine's free space.
+        real_estimate = execution.configuration.storage_estimate
+        def ample_space(config):
+            return dict(real_estimate(config), available_bytes=1024 ** 4)
+        disk_patch = mock.patch.object(execution.configuration, 'storage_estimate', side_effect=ample_space)
+        disk_patch.start()
+        self.addCleanup(disk_patch.stop)
         self.images = {name: 'sha256:' + str(number) * 64 for number, name in enumerate(execution.IMAGE_KEYS, 1)}
         estimate = fixtures.cfg.storage_estimate(self.config)
         fixtures.cfg.save_configuration(self.config, estimate, fixtures.cfg.execution_summary(self.config, estimate))

@@ -26,3 +26,7 @@ The final expression is `INFO/TLOD>0 && INFO/TLOD!="."` on VEP-annotated PASS re
 The settings-file runner requests Nextflow trace/report/timeline files automatically; the preserved direct command requires their corresponding options. Trace `realtime` and `duration` are different fields. Host peak RSS is not GPU memory; logical-CPU quota is not observed CPU usage; summed task times can double-count overlapping tasks. See [runtime scope](../analysis/runtime/README.md).
 
 A zero-variant VCF is not, by itself, evidence of software failure; scientific adequacy must be evaluated separately.
+
+## Optional v1.1.0 outputs
+
+BAM mode adds `results/input_checks/SAMPLE/` with validation receipts and headers; input BAMs are not republished. QC adds `results/qc/SAMPLE/qc_metrics/` and its provenance files. PoN processing adds `results/pon/` receipts and, when automatically prepared, the derived panel/index. `stage5/variants/PAIR/` retains both the raw caller VCF/statistics and the `.pon.vcf` produced by postpon. Filtering uses the latter with statistics from the same call. See [BAM/PoN/QC](bam-pon-qc.md).

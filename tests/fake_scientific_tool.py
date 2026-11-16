@@ -51,14 +51,23 @@ elif name == 'pbrun':
     for flag in ('--out-bam', '--out-recal-file', '--out-duplicate-metrics', '--out-vcf'):
         if flag in args:
             placeholder(value(flag))
+    if args[0] == 'prepon':
+        placeholder(value('--in-pon-file') + '.pon')
+    if '--out-qc-metrics-dir' in args:
+        Path(value('--out-qc-metrics-dir')).mkdir(parents=True, exist_ok=True)
+        placeholder(Path(value('--out-qc-metrics-dir')) / 'alignment_metrics.txt')
     if '--out-bam' in args:
         placeholder(value('--out-bam') + '.bai')
     if '--out-vcf' in args:
         placeholder(value('--out-vcf') + '.stats')
 elif name == 'samtools':
-    if args[0] == 'view':
+    if args[0] == 'view' and '-c' in args:
+        print('0')
+    elif args[0] == 'view':
         sample = Path(args[-1]).name.split('.')[0] if '.reheader.' in args[-1] else 'sample'
-        print('@HD\tVN:1.6\tSO:coordinate\n@RG\tID:test\tSM:' + sample)
+        if Path(args[-1]).name == 'input.bam' or Path(args[-1]).name in ('TUMOR.bam', 'NORMAL.bam'):
+            sample = Path(args[-1]).resolve().stem
+        print('@HD\tVN:1.6\tSO:coordinate\n@SQ\tSN:chr1\tLN:100\n@RG\tID:test\tSM:' + sample)
     elif args[0] == 'reheader':
         print('TEST DOUBLE BAM CONTENT')
     elif args[0] == 'index':
@@ -67,7 +76,14 @@ elif name == 'samtools':
         raise SystemExit('Unhandled fake samtools command')
 elif name == 'bcftools':
     if args[0] == 'index':
-        placeholder(args[-1] + '.tbi')
+        if '-n' in args:
+            print('0')
+        else:
+            placeholder(args[-1] + '.tbi')
+    elif args[0] == 'reheader':
+        placeholder(value('-o'))
+    elif args[0] == 'norm':
+        pass
     elif args[0] == 'view':
         if '-h' in args:
             print('##INFO=<ID=CSQ,Number=.,Type=String,Description="Test double">')
