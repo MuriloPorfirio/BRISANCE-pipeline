@@ -16,6 +16,7 @@ import time
 
 import configure_brisance as configuration
 import check_environment as environment
+import somatic_inputs
 
 
 IMAGE_KEYS = ('trim', 'parabricks', 'samtools', 'gatk', 'bcftools', 'vep')
@@ -87,7 +88,7 @@ def check_environment(config, runtime, no_download):
         'sha256': hashlib.sha256((Path(config['analysis_dir']) / 'brisance.json').read_bytes()).hexdigest()}
     checker.report['interface_source_sha256'] = {
         name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-        for name in ('configure_brisance.py', 'check_environment.py', 'run_from_file.py', 'execute_analysis.py')}
+        for name in ('configure_brisance.py', 'check_environment.py', 'run_from_file.py', 'execute_analysis.py', 'somatic_inputs.py')}
     try:
         checker.run()
         checker.step('Regular result-file publication', lambda: publication_probe(config))
@@ -131,6 +132,10 @@ def expected_tasks(config):
     if config.get('somatic'):
         # Validate/prepare PoN + postpon; prepon only when not supplied prepared.
         count += 2 if config['somatic']['pon_prepared'] else 3
+    if config.get('orientation', {}).get('mode') == 'auto':
+        count += 1
+    if config.get('contamination', {}).get('mode') == 'auto':
+        count += 4  # Resource validation, two pileups, one matched-normal estimate.
     return count
 
 
@@ -159,7 +164,34 @@ def completion_check(config, report_dir):
             metrics = root / 'qc' / sample / 'qc_metrics'
             if not metrics.is_dir() or not any(p.is_file() and p.stat().st_size for p in metrics.rglob('*')):
                 raise ValueError('Missing QC metric files for ' + sample)
+    models = {}
+    orientation = config.get('orientation', {})
+    contamination = config.get('contamination', {})
+    if orientation:
+        priors = (root / 'somatic_models/orientation' / pair / (names['tumor'] + '.orientation_priors.tar.gz')
+                  if orientation['mode'] == 'auto' else Path(orientation['priors']))
+        models['orientation'] = {'mode': orientation['mode'], 'priors': str(priors),
+                                 'validation': somatic_inputs.check_priors(priors, names['tumor']),
+                                 'sha256': hashlib.sha256(priors.read_bytes()).hexdigest()}
+        if orientation['mode'] == 'auto':
+            f1r2 = root / 'stage5/variants' / pair / (pair + '.f1r2.tar.gz')
+            if not f1r2.is_file() or not f1r2.stat().st_size:
+                raise ValueError('Missing requested F1R2 counts.')
+    if contamination:
+        automatic = contamination['mode'] == 'auto'
+        table = (root / 'somatic_models/contamination' / pair / (names['tumor'] + '.contamination.table')
+                 if automatic else Path(contamination['table']))
+        models['contamination'] = {'mode': contamination['mode'], 'table': str(table),
+                                   'estimate': somatic_inputs.check_contamination(table, names['tumor']),
+                                   'sha256': hashlib.sha256(table.read_bytes()).hexdigest()}
+        segments = (root / 'somatic_models/contamination' / pair / (names['tumor'] + '.segments.table')
+                    if automatic else Path(contamination['segments']) if contamination.get('segments') else None)
+        if segments:
+            models['contamination']['segmentation'] = somatic_inputs.check_segments(segments, names['tumor'], config['reference']['fasta'])
+            models['contamination']['segments_path'] = str(segments)
+            models['contamination']['segments_sha256'] = hashlib.sha256(segments.read_bytes()).hexdigest()
     return {'tasks_completed': len(tasks), 'final_vcf': str(vcf), 'counts': counts,
+            **({'somatic_models': models} if models else {}),
             'scope': 'Execution/regular-file checks, not a biological accuracy benchmark.'}
 
 

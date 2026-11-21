@@ -250,7 +250,7 @@ def validate_resources(value):
 def validate_configuration(config):
     required = {'schema_version', 'analysis_dir', 'samples', 'reference', 'trimming', 'resources'}
     if (not isinstance(config, dict) or not required <= set(config) or
-            set(config) - required - {'input_mode', 'somatic', 'qc'} or
+            set(config) - required - {'input_mode', 'somatic', 'qc', 'orientation', 'contamination'} or
             type(config['schema_version']) is not int or config['schema_version'] != SCHEMA_VERSION):
         raise ValueError('Unsupported configuration schema or unknown configuration fields.')
     root = absolute_path(config['analysis_dir'])
@@ -314,6 +314,8 @@ def validate_configuration(config):
         if config['qc'] != {'enabled': True} or type(config['qc']['enabled']) is not bool:
             raise ValueError('qc must contain enabled = true, or be omitted.')
         result['qc'] = {'enabled': True}
+    from somatic_inputs import validate_options
+    result.update(validate_options(config, readable_file, result['reference']['fasta']))
     return result
 
 
@@ -373,6 +375,7 @@ def execution_summary(config, estimate):
                   'Available: ' + human_bytes(estimate['available_bytes']), estimate['basis'],
                   'BAM SM, coordinate order, sequence dictionary and indexed access are checked before calling.',
                   'QC reports describe these supplied BAMs and do not filter variants.']
+        lines += somatic_summary(config)
         for stage, settings in active_resources(config).items():
             lines.append(stage + ': ' + str(settings))
         return '\n'.join(lines)
@@ -421,7 +424,17 @@ def execution_summary(config, estimate):
     if config.get('somatic') or config.get('qc'):
         lines += ['PoN: ' + config.get('somatic', {}).get('pon', 'disabled'),
                   'QC metrics on recalibrated BAMs: ' + str(bool(config.get('qc')))]
-    return '\n'.join(lines)
+    return '\n'.join(lines + somatic_summary(config))
+
+
+def somatic_summary(config):
+    lines = []
+    for name in ('orientation', 'contamination'):
+        if name in config:
+            lines.append(name.capitalize() + ': ' + str(config[name]))
+    if lines:
+        lines.append('These inputs affect FilterMutectCalls; auto models are generated for this analysis. Accuracy and storage impact require validation.')
+    return lines
 
 
 def prompt(text, validator=str, default=None, input_fn=None, output_fn=print):

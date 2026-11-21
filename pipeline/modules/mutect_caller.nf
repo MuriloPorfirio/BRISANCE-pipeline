@@ -15,15 +15,18 @@ process MUTECT_CALLER {
     output:
     tuple val(tumor_sample), val(normal_sample), path("${tumor_sample}_vs_${normal_sample}.vcf"), path("${tumor_sample}_vs_${normal_sample}.vcf.stats"), emit: calls
     tuple val(tumor_sample), val(normal_sample), path('mutectcaller_versions.txt'), path('run_configuration.txt'), emit: provenance
+    tuple val(tumor_sample), val(normal_sample), path("${tumor_sample}_vs_${normal_sample}.f1r2.tar.gz"), optional: true, emit: f1r2
 
     script:
     def ponArgs = pon_files ? "--pon \"${pon_files[0]}\"" : ''
+    def orientationArgs = options.get('orientation_auto', false) ? "--mutect-f1r2-tar-gz \"${tumor_sample}_vs_${normal_sample}.f1r2.tar.gz\"" : ''
     """
     mkdir -p tmp
     pbrun mutectcaller \
         --num-htvc-threads ${options.htvc_threads} \
         --ref "${reference}" \
         ${ponArgs} \
+        ${orientationArgs} \
         --in-tumor-bam "${tumor_bam}" \
         --in-normal-bam "${normal_bam}" \
         --out-vcf "${tumor_sample}_vs_${normal_sample}.vcf" \
@@ -37,6 +40,7 @@ process MUTECT_CALLER {
         'tumor_sample=${tumor_sample}' \
         'normal_sample=${normal_sample}' \
         'pon_enabled=${pon_files ? true : false}' \
+        'orientation_F1R2_requested=${options.get('orientation_auto', false)}' \
         'tumor_bam=${tumor_bam}' \
         'tumor_index=${tumor_index}' \
         'normal_bam=${normal_bam}' \

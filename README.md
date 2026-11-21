@@ -17,6 +17,19 @@ FASTQ → Trim Galore / FastQC → fq2bam → ApplyBQSR → read-group adjustmen
 
 Optional in **v1.1.0**: start from existing tumor–normal BAMs, supply a panel of normals in the INI, and collect BAM QC metrics without realignment. See [BAM input, PoN and QC](docs/bam-pon-qc.md) and [changes](CHANGELOG.md). Legacy FASTQ INIs retain their defaults.
 
+**New in v1.2.0.** To model read-orientation artifacts and estimate cross-sample contamination, edit these sections in `analysis.local.ini`. Replace the example path with your indexed, reference-matched common-SNP VCF.
+
+```ini
+[orientation]
+mode = auto
+
+[contamination]
+mode = auto
+sites = /references/common_biallelic_GRCh38.vcf.gz
+```
+
+Both filters default to `off`. Set either to `provided` to reuse models for the same tumor. The [somatic filtering guide](docs/somatic-filtering.md) describes accepted inputs, output files and the five-pair GRCh38 pilot.
+
 ## Getting started
 
 Run on a Linux x86_64 server with compatible NVIDIA GPUs, Docker and NVIDIA Container Toolkit. Bash, Python 3.8+ and Git are required. Input data and reference resources must be available on that server. See [Requirements](docs/requirements.md) for software versions and hardware details.

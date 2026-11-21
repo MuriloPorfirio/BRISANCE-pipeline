@@ -92,3 +92,7 @@ The estimate assumes retained intermediates, no extra original FASTQ copy and no
 See the [BAM/PoN/QC guide](../docs/bam-pon-qc.md) and [BAM settings example](brisance.bam.example.ini). `[analysis] input_mode = bam` uses `bam` and optional `bam_index` instead of `r1/r2` within each sample section. `[somatic] pon` enables a user-provided panel; `[qc] enabled = true` collects independent metrics. The panel is separate from the matched-normal BAM. These features are disabled in legacy INIs.
 
 `--run --yes` is an explicit unattended execution option; it disables downloads and preserves all technical preflight checks. It never resumes or overwrites a scientific run.
+
+## Optional somatic filtering (v1.2.0)
+
+In `analysis.local.ini`, set `mode = auto` under `[orientation]` to learn read-orientation priors. Set `mode = auto` under `[contamination]` and fill in `sites` with your indexed common-SNP VCF to estimate tumor contamination using the matched normal. Both settings default to `off`. For `provided` mode, enter `priors` for orientation or `table` and optionally `segments` for contamination. Leave fields for other modes empty. See the [complete examples and input requirements](../docs/somatic-filtering.md).

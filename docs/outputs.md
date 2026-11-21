@@ -30,3 +30,7 @@ A zero-variant VCF is not, by itself, evidence of software failure; scientific a
 ## Optional v1.1.0 outputs
 
 BAM mode adds `results/input_checks/SAMPLE/` with validation receipts and headers; input BAMs are not republished. QC adds `results/qc/SAMPLE/qc_metrics/` and its provenance files. PoN processing adds `results/pon/` receipts and, when automatically prepared, the derived panel/index. `stage5/variants/PAIR/` retains both the raw caller VCF/statistics and the `.pon.vcf` produced by postpon. Filtering uses the latter with statistics from the same call. See [BAM/PoN/QC](bam-pon-qc.md).
+
+## Optional somatic model outputs (v1.2.0)
+
+Automatic orientation modeling retains the F1R2 archive under `results/stage5/variants/PAIR/` and the learned priors under `results/somatic_models/orientation/PAIR/`. Automatic contamination estimation publishes each pileup summary under `results/somatic_models/contamination/SAMPLE/` and the tumor estimate and segments under `results/somatic_models/contamination/PAIR/`. The stage 6 `filter_configuration.txt` records the inputs used by FilterMutectCalls. See the [somatic filtering guide](somatic-filtering.md).

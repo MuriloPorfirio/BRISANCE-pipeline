@@ -43,3 +43,5 @@ The [preserved HG008 workflow](hg008-reproduction.md) has a separate samplesheet
 ## Existing BAMs and optional PoN/QC
 
 Version 1.1.0 also accepts already processed BAMs and optional user-provided panels of normals. See [BAM input, PoN and QC](bam-pon-qc.md) for the INI fields, outputs, unattended operation, resource limits and scientific interpretation. Old FASTQ settings remain supported without enabling these features.
+
+Since v1.2.0 the FASTQ and BAM templates include optional settings for read-orientation artifacts and cross-sample contamination. Edit `[orientation]` and `[contamination]` in your INI, then run the usual configuration check. See [configuration and examples](somatic-filtering.md).

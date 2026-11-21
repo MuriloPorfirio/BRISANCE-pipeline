@@ -5,11 +5,14 @@ Used with real Nextflow and a fake Docker CLI to test orchestration/parameters.
 It must never be installed on a scientific execution PATH.
 """
 import json
+import io
+import itertools
 import os
 from pathlib import Path
 import re
 import subprocess
 import sys
+import tarfile
 
 name = Path(sys.argv[0]).name
 args = sys.argv[1:]
@@ -24,6 +27,21 @@ def value(flag):
 
 def placeholder(path):
     Path(path).write_text('TEST DOUBLE OUTPUT — NOT SCIENTIFIC DATA\n')
+
+
+def synthetic_priors(path, sample):
+    columns = ['context', 'rev_comp'] + ['f1r2_' + b for b in 'acgt'] + ['f2r1_' + b for b in 'acgt'] + [
+        'hom_ref', 'germline_het', 'somatic_het', 'hom_var', 'num_examples', 'num_alt_examples']
+    text = '#<METADATA>SAMPLE=' + sample + '\n' + '\t'.join(columns) + '\n'
+    for bases in itertools.product('ACGT', repeat=3):
+        context = ''.join(bases)
+        text += '\t'.join([context, context.translate(str.maketrans('ACGT', 'TGCA'))[::-1]] +
+                          ['0'] * 8 + ['1', '0', '0', '0', '0', '0']) + '\n'
+    payload = text.encode()
+    with tarfile.open(path, 'w:gz') as archive:
+        member = tarfile.TarInfo(sample + '.orientation_priors')
+        member.size = len(payload)
+        archive.addfile(member, io.BytesIO(payload))
 
 
 if name == 'docker':
@@ -48,8 +66,10 @@ elif name == 'trim_galore':
         placeholder(base + '_fastqc.zip')
         placeholder(Path(raw).name + '_trimming_report.txt')
 elif name == 'pbrun':
-    for flag in ('--out-bam', '--out-recal-file', '--out-duplicate-metrics', '--out-vcf'):
+    for flag in ('--out-bam', '--out-recal-file', '--out-duplicate-metrics', '--out-vcf', '--mutect-f1r2-tar-gz'):
         if flag in args:
+            if flag == '--mutect-f1r2-tar-gz' and os.environ.get('BRISANCE_TEST_OMIT_F1R2'):
+                continue
             placeholder(value(flag))
     if args[0] == 'prepon':
         placeholder(value('--in-pon-file') + '.pon')
@@ -77,13 +97,18 @@ elif name == 'samtools':
 elif name == 'bcftools':
     if args[0] == 'index':
         if '-n' in args:
-            print('0')
+            print('1' if Path(args[-1]).name == 'population.vcf.gz' else '0')
+        elif '-s' in args:
+            print('chr1\t100\t1')
         else:
             placeholder(args[-1] + '.tbi')
     elif args[0] == 'reheader':
         placeholder(value('-o'))
     elif args[0] == 'norm':
         pass
+    elif args[0] == 'query':
+        if '-f' in args:
+            print('chr1\t1\tA\tC\t0.1')
     elif args[0] == 'view':
         if '-h' in args:
             print('##INFO=<ID=CSQ,Number=.,Type=String,Description="Test double">')
@@ -95,8 +120,21 @@ elif name == 'bcftools':
         raise SystemExit('Unhandled fake bcftools command')
 elif name == 'gatk':
     path = value('-O')
-    for suffix in ('', '.tbi', '.filteringStats.tsv'):
-        placeholder(path + suffix)
+    if 'LearnReadOrientationModel' in args:
+        synthetic_priors(path, Path(path).name.split('.')[0])
+    elif 'CalculateContamination' in args:
+        sample = Path(path).name.split('.')[0]
+        Path(path).write_text('sample\tcontamination\terror\n' + sample + '\t0.001\t0.0001\n')
+        Path(value('--tumor-segmentation')).write_text('#<METADATA>SAMPLE=' + sample +
+            '\ncontig\tstart\tend\tminor_allele_fraction\nchr1\t1\t100\t0.5\n')
+    elif 'GetPileupSummaries' in args:
+        placeholder(path)
+    else:
+        for flag in ('--orientation-bias-artifact-priors', '--contamination-table', '--tumor-segmentation'):
+            if flag in args and not Path(value(flag)).is_file():
+                raise SystemExit('Missing staged model: ' + value(flag))
+        for suffix in ('', '.tbi', '.filteringStats.tsv'):
+            placeholder(path + suffix)
 elif name == 'vep':
     placeholder(value('--output_file'))
     placeholder(value('--stats_file'))

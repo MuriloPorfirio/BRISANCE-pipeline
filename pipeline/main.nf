@@ -13,6 +13,7 @@ include { SELECT_POSITIVE_TLOD } from './modules/select_positive_tlod'
 include { CHECK_INPUT_BAM } from './modules/check_input_bam'
 include { COLLECT_BAM_QC } from './modules/collect_bam_qc'
 include { CHECK_PREPARED_PON; PREPARE_PON_VCF; PREPON; POSTPON } from './modules/pon'
+include { CHECK_CONTAMINATION_SITES; GET_PILEUP_SUMMARIES; CALCULATE_CONTAMINATION; LEARN_READ_ORIENTATION_MODEL } from './modules/somatic_models'
 
 def safeValues(value) {
     // Defense in depth for generated parameters that enter task scripts.
@@ -79,6 +80,8 @@ workflow {
     def cacheInfo = resource(params.bundle.cache_info)
     def res = c.resources
     def output = "${c.analysis_dir}/results"
+    def orientation = c.get('orientation', [mode: 'off'])
+    def contamination = c.get('contamination', [mode: 'off'])
     if (params.mode == 'validate') {
         log.info "CONFIGURABLE WORKFLOW CHECK OK: ${records.size()} input pairs; all stages loaded. No processing started."
     } else {
@@ -137,7 +140,37 @@ workflow {
             }
         }
         MUTECT_CALLER(tumorNormal, ref, indices, ponChannel,
-            [devices: res.calling.gpu_devices, htvc_threads: res.calling.threads], "${output}/stage5")
+            [devices: res.calling.gpu_devices, htvc_threads: res.calling.threads,
+             orientation_auto: orientation.mode == 'auto'], "${output}/stage5")
+        def priorsChannel = channel.value([])
+        if (orientation.mode == 'auto') {
+            LEARN_READ_ORIENTATION_MODEL(MUTECT_CALLER.out.f1r2, res.filtering.java_heap_gb, output)
+            // Missing F1R2 must fail, rather than close a branch without filtering.
+            priorsChannel = LEARN_READ_ORIENTATION_MODEL.out.priors
+                .ifEmpty { error 'Requested orientation model produced no F1R2/priors.' }
+                .map { priors -> [priors] }
+        } else if (orientation.mode == 'provided') {
+            priorsChannel = channel.value([resource(orientation.priors)])
+        }
+        def contaminationChannel = channel.value([])
+        def segmentationChannel = channel.value([])
+        if (contamination.mode == 'auto') {
+            CHECK_CONTAMINATION_SITES(resource(contamination.sites), resource(contamination.sites + '.tbi'), ref, indices, output)
+            GET_PILEUP_SUMMARIES(readyBams, CHECK_CONTAMINATION_SITES.out.resource, ref, indices,
+                res.filtering.java_heap_gb, output)
+            def pileupPair = GET_PILEUP_SUMMARIES.out.pileups.collect(flat: false).map { items ->
+                if (items.size() != 2) error 'Tumor and matched-normal pileups are required.'
+                def tumor = items.find { it[1] == 'tumor' }
+                def normal = items.find { it[1] == 'normal' }
+                tuple(tumor[0], tumor[2], normal[0], normal[2])
+            }
+            CALCULATE_CONTAMINATION(pileupPair, res.filtering.java_heap_gb, output)
+            contaminationChannel = CALCULATE_CONTAMINATION.out.model.map { table, segments -> [table] }
+            segmentationChannel = CALCULATE_CONTAMINATION.out.model.map { table, segments -> [segments] }
+        } else if (contamination.mode == 'provided') {
+            contaminationChannel = channel.value([resource(contamination.table)])
+            if (contamination.get('segments')) segmentationChannel = channel.value([resource(contamination.segments)])
+        }
         def calls = MUTECT_CALLER.out.calls
         if (c.get('somatic', [:]).get('pon')) {
             POSTPON(calls, ponChannel, res.calling.gpu_devices[0], "${output}/stage5")
@@ -148,6 +181,7 @@ workflow {
             calls.map { tumor, normal, vcf, stats -> tuple(tumor, normal, stats) },
             by: [0, 1], failOnDuplicate: true, failOnMismatch: true)
         FILTER_MUTECT_CALLS(rawWithStats, ref, indices.findAll { it.name.endsWith('.fai') || it.name.endsWith('.dict') },
+            priorsChannel, contaminationChannel, segmentationChannel,
             res.filtering.java_heap_gb, "${output}/stage6")
         SELECT_PASS(FILTER_MUTECT_CALLS.out.filtered, "${output}/stage6")
         ANNOTATE_VEP(SELECT_PASS.out.pass_calls, cacheInfo,

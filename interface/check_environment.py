@@ -416,6 +416,8 @@ class EnvironmentCheck:
             files += [Path(pon), Path(pon + '.tbi')]
             if self.config['somatic']['pon_prepared']:
                 files.append(Path(pon + '.pon'))
+        from somatic_inputs import input_files
+        files += input_files(self.config)
         cache = self.config['reference']
         files += [Path(cache['vep_cache_dir']) / 'homo_sapiens' / ('113_' + cache['assembly']) / 'info.txt']
         image_id = self.images[IMAGES[2]['image']]
@@ -433,6 +435,33 @@ class EnvironmentCheck:
         return {'read_only_input_mounts_checked': len(files), 'writable_probe': 'container-write-check.txt',
                 'sequencing_contents_read': False}
 
+    def check_somatic_capabilities(self):
+        orientation = self.config.get('orientation', {}).get('mode', 'off')
+        contamination = self.config.get('contamination', {}).get('mode', 'off')
+        requested = {'FilterMutectCalls': []}
+        if orientation != 'off':
+            requested['FilterMutectCalls'].append('--orientation-bias-artifact-priors')
+        if orientation == 'auto':
+            requested['LearnReadOrientationModel'] = ['--input', '--output']
+        if contamination != 'off':
+            requested['FilterMutectCalls'].append('--contamination-table')
+            if contamination == 'auto' or self.config.get('contamination', {}).get('segments'):
+                requested['FilterMutectCalls'].append('--tumor-segmentation')
+        if contamination == 'auto':
+            requested['GetPileupSummaries'] = ['--variant', '--intervals', '--minimum-population-allele-frequency']
+            requested['CalculateContamination'] = ['--matched-normal', '--tumor-segmentation']
+        for tool, flags in requested.items():
+            output = self.run_command(self.container_command(self.images[IMAGES[3]['image']],
+                ['bash', '-c', 'gatk ' + tool + ' --help 2>&1; code=$?; test "$code" -eq 0 -o "$code" -eq 1']), timeout=120)
+            if any(flag not in output for flag in flags):
+                raise CheckFailure('Installed GATK lacks requested options: ' + tool)
+        if orientation == 'auto':
+            output = self.run_command(self.container_command(self.images[IMAGES[1]['image']],
+                ['bash', '-c', 'pbrun mutectcaller --help 2>&1; code=$?; test "$code" -eq 0 -o "$code" -eq 1'], gpu=True), timeout=120)
+            if '--mutect-f1r2-tar-gz' not in output:
+                raise CheckFailure('Installed Parabricks does not advertise --mutect-f1r2-tar-gz.')
+        return {'orientation': orientation, 'contamination': contamination, 'GATK_tools': sorted(requested)}
+
     def run(self):
         self.step('Linux, CPU and available RAM', self.check_host)
         self.step('Analysis storage', self.check_storage)
@@ -442,6 +471,8 @@ class EnvironmentCheck:
         self.step('Selected NVIDIA GPUs and driver access', self.check_gpus)
         for spec in IMAGES:
             self.check_image(spec)
+        if self.config.get('orientation') or self.config.get('contamination'):
+            self.step('Requested somatic filtering capabilities', self.check_somatic_capabilities)
         self.step('Selected GPU visibility inside the Parabricks container', self.check_gpu_container)
         self.step('Read-only input access and analysis-directory write access', self.check_mounts)
         # Downloads and other users may have changed disk/GPU state during checks.

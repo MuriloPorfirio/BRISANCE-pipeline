@@ -31,6 +31,8 @@ FIELDS = {
     'normal': {'sample', 'r1', 'r2', 'bam', 'bam_index'},
     'somatic': {'pon', 'pon_prepared'},
     'qc': {'enabled'},
+    'orientation': {'mode', 'priors'},
+    'contamination': {'mode', 'sites', 'table', 'segments'},
     'reference': {'fasta', 'assembly', 'known_sites', 'vep_cache', 'vep_cache_version'},
     'trimming': {'adapters', 'adapter_r1', 'adapter_r2', 'quality', 'min_read_length'},
     'runtime': {'java', 'nextflow', 'check_environment', 'allow_downloads'},
@@ -157,6 +159,16 @@ def parse_settings(path, content=None):
         config['somatic'] = {'pon': pon, 'pon_prepared': prepared}
     if boolean('enabled', False, 'qc'):
         config['qc'] = {'enabled': True}
+    for section, inputs in (('orientation', ('priors',)), ('contamination', ('sites', 'table', 'segments'))):
+        mode = get(section, 'mode', 'off').lower()
+        supplied = {key: get(section, key, '') for key in inputs if get(section, key, '')}
+        if mode not in ('off', 'auto', 'provided'):
+            raise ValueError('[{}] mode must be off, auto or provided.'.format(section))
+        if mode == 'off':
+            if supplied:
+                raise ValueError('[{}] inputs require an active mode; remove stale inputs when off.'.format(section))
+        else:
+            config[section] = {'mode': mode, **supplied}
     runtime = {'java': get('runtime', 'java', '') or None, 'nextflow': get('runtime', 'nextflow', '') or None,
                'check_environment': boolean('check_environment', True), 'allow_downloads': boolean('allow_downloads', True)}
     return config, runtime

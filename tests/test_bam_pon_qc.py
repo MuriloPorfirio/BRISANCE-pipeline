@@ -186,6 +186,7 @@ class BamPonQcTests(unittest.TestCase):
             self.assertFalse(any(row[0] in ('fq2bam', 'applybqsr') for row in pbrun))
             self.assertFalse(any(row['tool'] == 'trim_galore' for row in calls))
         self.assertFalse(any(path.is_symlink() for path in (Path(c['analysis_dir']) / 'results').rglob('*')))
+        return calls
 
 
 if __name__ == '__main__':
