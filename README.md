@@ -86,6 +86,14 @@ The HG008 evaluation used all original reads, without subsampling. The run compl
 
 The original HG008 commands are retained under [HG008 reproduction](docs/hg008-reproduction.md). Dataset and reference sources are listed in [Data and references](docs/data.md).
 
+## Citation
+
+If you use BRISANCE, please cite the bioRxiv preprint:
+
+Porfirio de Aguiar M, Bispo S, Teixeira SA, Reis RM, Sussuchi da Silva L, Santos LGC. **BRISANCE: A GPU-Accelerated Pipeline for Somatic Short-Variant Detection in Whole-Genome Sequencing Data.** bioRxiv [preprint]. 2026. [https://doi.org/10.64898/2026.11.24.768872](https://doi.org/10.64898/2026.11.24.768872).
+
+[BibTeX](citation.bib) · [Citation metadata](CITATION.cff). Please also report the BRISANCE release or commit used in your analysis.
+
 ## Project and authors
 
 BRISANCE is part of InovaCriança — Inovação terapêutica em crianças com tumores sólidos: uma jornada de precisão, supported by the Brazilian Ministry of Health and CNPq through Chamada nº 16/2023 – Saúde de Precisão (MS-SECTICS-Decit/CNPq nº 444217/2023-1).

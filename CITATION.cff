@@ -1,0 +1,53 @@
+cff-version: 1.2.0
+message: "If you use BRISANCE, please cite the bioRxiv preprint below and report the software release or commit used."
+type: software
+title: BRISANCE
+url: "https://brisance.vercel.app"
+repository-code: "https://github.com/MuriloPorfirio/BRISANCE-pipeline"
+authors:
+  - given-names: Murilo
+    family-names: Porfirio de Aguiar
+    orcid: "https://orcid.org/0000-0002-7533-0763"
+  - given-names: Saloe
+    family-names: Bispo
+    orcid: "https://orcid.org/0000-0002-8243-4659"
+  - given-names: Silvia Aparecida
+    family-names: Teixeira
+    orcid: "https://orcid.org/0000-0002-2462-8535"
+  - given-names: Rui Manuel
+    family-names: Reis
+    orcid: "https://orcid.org/0000-0002-9639-7940"
+  - given-names: Luciane
+    family-names: Sussuchi da Silva
+    orcid: "https://orcid.org/0000-0002-7470-4655"
+  - given-names: Leticia Graziela Costa
+    family-names: Santos
+    orcid: "https://orcid.org/0000-0002-0206-2294"
+preferred-citation:
+  type: article
+  title: "BRISANCE: A GPU-Accelerated Pipeline for Somatic Short-Variant Detection in Whole-Genome Sequencing Data"
+  authors:
+    - given-names: Murilo
+      family-names: Porfirio de Aguiar
+      orcid: "https://orcid.org/0000-0002-7533-0763"
+    - given-names: Saloe
+      family-names: Bispo
+      orcid: "https://orcid.org/0000-0002-8243-4659"
+    - given-names: Silvia Aparecida
+      family-names: Teixeira
+      orcid: "https://orcid.org/0000-0002-2462-8535"
+    - given-names: Rui Manuel
+      family-names: Reis
+      orcid: "https://orcid.org/0000-0002-9639-7940"
+    - given-names: Luciane
+      family-names: Sussuchi da Silva
+      orcid: "https://orcid.org/0000-0002-7470-4655"
+    - given-names: Leticia Graziela Costa
+      family-names: Santos
+      orcid: "https://orcid.org/0000-0002-0206-2294"
+  journal: bioRxiv
+  year: 2026
+  date-published: "2026-11-25"
+  doi: "10.64898/2026.11.24.768872"
+  url: "https://doi.org/10.64898/2026.11.24.768872"
+  notes: Preprint
